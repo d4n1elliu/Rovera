@@ -111,33 +111,24 @@ const PAYMENT_METHODS = [
 
 export function Footer() {
   return (
-    <footer className="border-t bg-white">
+    <footer className="border-t border-white/10 bg-[#0a1730] text-blue-200">
       <div className="w-full px-4 py-12 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="space-y-3">
-            <div className="flex items-center gap-2 font-semibold">
-              <Image src="/logo.png" alt="" width={28} height={28} className="rounded" />
-              <span className="text-lg">{siteConfig.name}</span>
+            <div className="flex items-center gap-3 font-semibold text-white">
+              <Image src="/logo.png" alt="" width={40} height={40} className="rounded-xl" />
+              <span className="text-2xl">{siteConfig.name}</span>
             </div>
-            <p className="text-sm text-gray-500">
-              Car rental without the counter. Insurance included, free cancellation up to 24 hours
-              before pickup, and 24/7 roadside support on every booking.
-            </p>
-            <p className="text-sm text-gray-500">
-              <span aria-hidden className="text-amber-500">
-                ★
-              </span>{" "}
-              <span className="font-medium text-gray-700">4.8</span> average from 100+ clients
-            </p>
+            <p className="text-sm">Car rental without the counter.</p>
           </div>
 
           {LINK_COLUMNS.map((column) => (
             <div key={column.title}>
-              <h3 className="text-sm font-semibold text-gray-900">{column.title}</h3>
-              <ul className="mt-3 space-y-2 text-sm text-gray-500">
+              <h3 className="text-sm font-semibold text-white">{column.title}</h3>
+              <ul className="mt-3 space-y-2 text-sm">
                 {column.links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="transition-colors hover:text-gray-900">
+                    <Link href={link.href} className="transition-colors hover:text-white">
                       {link.label}
                     </Link>
                   </li>
@@ -147,8 +138,8 @@ export function Footer() {
           ))}
 
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Locations</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-500">
+            <h3 className="text-sm font-semibold text-white">Locations</h3>
+            <ul className="mt-3 space-y-2 text-sm">
               {LOCATIONS.map((city) => (
                 <li key={city}>{city}</li>
               ))}
@@ -156,15 +147,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center gap-4 border-t pt-6 text-sm text-gray-500 sm:flex-row sm:justify-between">
+        <div className="mt-10 flex flex-col items-center gap-4 border-t border-white/10 pt-6 text-sm sm:flex-row sm:justify-between">
           <p>
             © 2025–{new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
           <nav className="flex items-center gap-6" aria-label="Legal">
-            <Link href="/terms" className="transition-colors hover:text-gray-900">
+            <Link href="/terms" className="transition-colors hover:text-white">
               Terms of Use
             </Link>
-            <Link href="/privacy" className="transition-colors hover:text-gray-900">
+            <Link href="/privacy" className="transition-colors hover:text-white">
               Privacy Policy
             </Link>
           </nav>

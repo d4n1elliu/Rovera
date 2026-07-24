@@ -10,8 +10,10 @@ function toDateInput(date: Date) {
   return new Date(date.getTime() - offset * 60 * 1000).toISOString().slice(0, 10);
 }
 
+const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-5 py-2";
+const labelClass = "text-[10px] font-semibold uppercase tracking-widest text-gray-500";
 const fieldClass =
-  "h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light/40";
+  "w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none";
 
 export function BookingWidget() {
   const router = useRouter();
@@ -32,70 +34,61 @@ export function BookingWidget() {
   return (
     <form
       onSubmit={onSubmit}
-      className="rounded-xl bg-white p-4 shadow-lg ring-1 ring-black/5 sm:p-5"
       aria-label="Find available cars"
+      className="mx-auto flex w-full max-w-3xl flex-col divide-y divide-gray-200 rounded-3xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:flex-row sm:items-center sm:divide-y-0 sm:rounded-full"
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
-        <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-            Pickup location
-          </span>
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className={fieldClass}
-          >
-            {LOCATIONS.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-            Pickup date
-          </span>
-          <input
-            type="date"
-            value={pickup}
-            min={toDateInput(new Date())}
-            onChange={(e) => {
-              setPickup(e.target.value);
-              if (e.target.value > dropoff) setDropoff(e.target.value);
-            }}
-            className={fieldClass}
-            required
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-            Return date
-          </span>
-          <input
-            type="date"
-            value={dropoff}
-            min={pickup}
-            onChange={(e) => setDropoff(e.target.value)}
-            className={fieldClass}
-            required
-          />
-        </label>
-
-        <button
-          type="submit"
-          className="h-11 self-end rounded-md bg-brand px-8 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2"
+      <label className={segmentClass}>
+        <span className={labelClass}>Pickup</span>
+        <select
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className={fieldClass}
         >
-          Find cars
-        </button>
-      </div>
+          {LOCATIONS.map((city) => (
+            <option key={city} value={city}>
+              {city}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <p className="mt-3 text-xs text-gray-500">
-        Free cancellation up to 24h before pickup · No credit card needed to browse · Instant
-        confirmation
-      </p>
+      <span aria-hidden className="hidden h-9 w-px shrink-0 bg-gray-200 sm:block" />
+
+      <label className={segmentClass}>
+        <span className={labelClass}>From</span>
+        <input
+          type="date"
+          value={pickup}
+          min={toDateInput(new Date())}
+          onChange={(e) => {
+            setPickup(e.target.value);
+            if (e.target.value > dropoff) setDropoff(e.target.value);
+          }}
+          className={fieldClass}
+          required
+        />
+      </label>
+
+      <span aria-hidden className="hidden h-9 w-px shrink-0 bg-gray-200 sm:block" />
+
+      <label className={segmentClass}>
+        <span className={labelClass}>Until</span>
+        <input
+          type="date"
+          value={dropoff}
+          min={pickup}
+          onChange={(e) => setDropoff(e.target.value)}
+          className={fieldClass}
+          required
+        />
+      </label>
+
+      <button
+        type="submit"
+        className="m-1 h-11 shrink-0 rounded-full bg-brand px-7 text-sm font-semibold text-white transition-colors hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2"
+      >
+        Find cars
+      </button>
     </form>
   );
 }

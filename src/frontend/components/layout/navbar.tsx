@@ -4,22 +4,33 @@ import { siteConfig } from "@/frontend/config/site";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0a1730]">
       <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} />
+        <Link href="/" className="flex items-center gap-2 font-semibold text-white">
+          <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" />
           <span className="text-lg">{siteConfig.name}</span>
         </Link>
 
-        <ul className="flex items-center gap-6 text-sm">
-          {siteConfig.nav.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className="text-gray-600 transition-colors hover:text-gray-900">
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center gap-6">
+          <ul className="flex items-center gap-6 text-sm">
+            {siteConfig.nav.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="text-blue-100 transition-colors hover:text-white"
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/help"
+            className="hidden h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-gray-900 transition-colors hover:bg-blue-50 sm:inline-flex"
+          >
+            Contact us
+          </Link>
+        </div>
       </nav>
     </header>
   );
