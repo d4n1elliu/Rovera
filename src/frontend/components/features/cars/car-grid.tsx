@@ -11,9 +11,9 @@ export function CarGrid({ cars }: { cars: Car[] }) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {cars.map((car) => (
-        <CarCard key={car.id} car={car} />
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {cars.map((car, index) => (
+        <CarCard key={car.id} car={car} priority={index < 3} />
       ))}
     </div>
   );

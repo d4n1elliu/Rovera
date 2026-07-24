@@ -14,7 +14,7 @@ export default async function CarsPage({
   const cars = (await getCars(searchParams)) as unknown as Car[];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <div className="w-full space-y-6 px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold">Browse cars</h1>
         <SearchBar />
