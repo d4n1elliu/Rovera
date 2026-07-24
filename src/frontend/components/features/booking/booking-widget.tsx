@@ -39,17 +39,33 @@ export function BookingWidget() {
     >
       <label className={segmentClass}>
         <span className={labelClass}>Pickup</span>
-        <select
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className={fieldClass}
-        >
-          {LOCATIONS.map((city) => (
-            <option key={city} value={city}>
-              {city}
-            </option>
-          ))}
-        </select>
+        <span className="relative block">
+          <select
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            className={`${fieldClass} appearance-none pr-6`}
+          >
+            {LOCATIONS.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select>
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            fill="none"
+            className="pointer-events-none absolute right-1 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </label>
 
       <span aria-hidden className="hidden h-9 w-px shrink-0 bg-gray-200 sm:block" />
