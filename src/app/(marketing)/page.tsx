@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { getCars } from "@/backend/services/car.service";
 import { BookingWidget } from "@/frontend/components/features/booking/booking-widget";
 import { CarGrid } from "@/frontend/components/features/cars/car-grid";
@@ -65,33 +67,79 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
   return (
     <div className="space-y-14">
       {/* Hero */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b1c3f] via-brand-dark to-brand px-6 py-10 text-white sm:px-10 sm:py-14">
-        <div className="max-w-2xl space-y-4">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm ring-1 ring-white/20">
-            <span aria-hidden className="text-amber-400">
-              ★★★★★
-            </span>
-            <span>4.8 from 2,300+ rentals</span>
-          </p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Rent a car in minutes.
-            <br />
-            No counters, no hidden fees.
-          </h1>
-          <p className="text-lg text-blue-100">
-            Pick your dates, choose a car, and drive. Every booking includes insurance and free
-            cancellation up to 24 hours before pickup.
-          </p>
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-100 via-slate-50 to-blue-100 px-6 py-12 sm:px-10 lg:px-14 lg:py-16">
+        {/* Soft decorative glows */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-brand/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl"
+        />
+
+        <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_1fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">
+              Car rental, uncomplicated
+            </p>
+            <h1 className="mt-4 text-5xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+              Rent a car
+              <br />
+              in minutes.
+            </h1>
+            <p className="mt-5 max-w-md text-lg text-gray-600">
+              No counters, no hidden fees. Insurance and free cancellation up to 24 hours before
+              pickup including with every booking.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a
+                href="#fleet"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-brand px-8 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+              >
+                Book a car
+              </a>
+              <Link
+                href="/cars"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-gray-300 bg-white/60 px-8 text-sm font-semibold text-gray-800 backdrop-blur transition-colors hover:bg-white"
+              >
+                Browse the fleet
+              </Link>
+            </div>
+
+            <p className="mt-6 text-sm text-gray-600">
+              <span aria-hidden className="text-amber-500">
+                ★★★★★
+              </span>{" "}
+              <span className="font-semibold text-gray-900">4.8</span> from 2,300+ rentals
+            </p>
+          </div>
+
+          <div className="relative hidden lg:block">
+            <div
+              aria-hidden
+              className="absolute inset-x-8 bottom-6 h-10 rounded-full bg-gray-900/10 blur-2xl"
+            />
+            <Image
+              src="/car_images/2021-Mercedes-Benz-C-class-cabriolet-convertible.png"
+              alt="Mercedes-Benz C-Class Cabriolet available to rent"
+              width={720}
+              height={420}
+              className="relative w-full object-contain mix-blend-multiply"
+              priority
+            />
+          </div>
         </div>
 
-        <div className="mt-8">
+        <div className="relative mt-10">
           <BookingWidget />
         </div>
 
-        <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-blue-100">
+        <ul className="relative mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
           {TRUST_CHIPS.map((chip) => (
             <li key={chip} className="flex items-center gap-1.5">
-              <span aria-hidden className="text-emerald-400">
+              <span aria-hidden className="text-emerald-600">
                 ✓
               </span>
               {chip}
