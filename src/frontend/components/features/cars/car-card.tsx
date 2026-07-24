@@ -5,18 +5,18 @@ import type { Car } from "@/shared/types";
 
 export function CarCard({ car }: { car: Car }) {
   return (
-    <div className="group overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md">
-      <div className="relative aspect-[4/3] bg-gray-100">
+    <div className="group flex h-full flex-col overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md">
+      <div className="relative aspect-[4/3] bg-white">
         <Image
           src={car.imageUrl}
           alt={`${car.make} ${car.model}`}
           fill
-          className="object-cover transition-transform group-hover:scale-105"
+          className="object-contain p-6 transition-transform group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 33vw"
         />
       </div>
 
-      <div className="space-y-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex items-start justify-between">
           <div>
             <h3 className="font-semibold">
@@ -34,7 +34,7 @@ export function CarCard({ car }: { car: Car }) {
 
         <Link
           href={`/cars/${car.id}`}
-          className="flex h-9 w-full items-center justify-center rounded-md bg-brand text-sm font-medium text-white transition-colors hover:bg-brand-dark"
+          className="mt-auto flex h-9 w-full items-center justify-center rounded-md bg-brand text-sm font-medium text-white transition-colors hover:bg-brand-dark"
         >
           View details
         </Link>

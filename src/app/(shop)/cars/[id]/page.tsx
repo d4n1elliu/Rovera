@@ -11,12 +11,12 @@ export default async function CarDetailPage({ params }: { params: { id: string }
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-white">
           <Image
             src={car.imageUrl}
             alt={`${car.make} ${car.model}`}
             fill
-            className="object-cover"
+            className="object-contain p-6"
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />

@@ -15,7 +15,7 @@ export default async function HomePage() {
       <section className="space-y-4 py-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight">{siteConfig.description}</h1>
         <p className="text-gray-500">
-          Browse our fleet and book in minutes — no hidden fees, free cancellation.
+          Browse our fleet and book in minutes. No hidden fees, free cancellation.
         </p>
         <div className="flex justify-center">
           <SearchBar />
