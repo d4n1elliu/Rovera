@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     question: "Can I cancel my reservation?",
-    answer: "Yes — cancellations are free up to 24 hours before your pickup time.",
+    answer: "Yes, cancellations are free up to 24 hours before your pickup time.",
   },
   {
     question: "Is insurance included?",
@@ -19,7 +19,7 @@ const faqs = [
 
 export default function HelpPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-8 px-4 py-10">
       <h1 className="text-3xl font-bold">Help & FAQ</h1>
       <dl className="space-y-6">
         {faqs.map((faq) => (
