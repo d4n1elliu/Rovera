@@ -149,7 +149,7 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
       </section>
 
       {/* Fleet */}
-      <section id="fleet" className="space-y-4">
+      <section id="fleet" className="scroll-mt-20 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold">Available cars</h2>
