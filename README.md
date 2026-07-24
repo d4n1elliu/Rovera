@@ -55,3 +55,6 @@ Pages never touch Prisma directly; services own validation (Zod) and business ru
 | `npm run lint` | ESLint |
 | `npm run db:push` | Push Prisma schema to the database |
 | `npm run db:seed` | Seed sample data |
+
+# Link
+https://rovera1.vercel.app/
