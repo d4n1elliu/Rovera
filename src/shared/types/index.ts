@@ -11,6 +11,9 @@ export interface Car {
   seats: number;
   pricePerDay: number;
   imageUrl: string;
+  mileage?: string | null;
+  description?: string | null;
+  vin?: string | null;
   available: boolean;
 }
 

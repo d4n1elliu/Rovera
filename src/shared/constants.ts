@@ -1,4 +1,13 @@
-export const BODY_TYPES = ["sedan", "suv", "hatchback", "coupe", "convertible", "van"] as const;
+export const BODY_TYPES = [
+  "sedan",
+  "suv",
+  "hatchback",
+  "coupe",
+  "convertible",
+  "van",
+  "pickup",
+  "wagon",
+] as const;
 export const FUEL_TYPES = ["petrol", "diesel", "hybrid", "electric"] as const;
 export const TRANSMISSIONS = ["automatic", "manual"] as const;
 

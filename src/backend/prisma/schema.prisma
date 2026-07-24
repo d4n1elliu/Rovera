@@ -18,6 +18,9 @@ model Car {
   seats        Int
   pricePerDay  Float
   imageUrl     String
+  mileage      String?
+  description  String?
+  vin          String?
   available    Boolean       @default(true)
   reservations Reservation[]
 }

@@ -26,12 +26,14 @@ export default async function CarDetailPage({ params }: { params: { id: string }
           <h1 className="text-3xl font-bold">
             {car.make} {car.model}
           </h1>
+          {car.description && <p className="text-gray-600">{car.description}</p>}
           <ul className="space-y-1 text-gray-600">
             <li>Year: {car.year}</li>
             <li>Body: {car.bodyType}</li>
             <li>Fuel: {car.fuelType}</li>
             <li>Transmission: {car.transmission}</li>
             <li>Seats: {car.seats}</li>
+            {car.mileage && <li>Mileage: {car.mileage}</li>}
           </ul>
           <p className="text-2xl font-semibold">
             {formatPrice(car.pricePerDay)} <span className="text-sm text-gray-500">/ day</span>
