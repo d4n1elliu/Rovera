@@ -7,6 +7,6 @@ export function carRating(id: string) {
   }
   return {
     rating: 4.5 + (hash % 5) / 10,
-    reviews: 18 + (hash % 120),
+    reviews: 4 + (hash % 14),
   };
 }

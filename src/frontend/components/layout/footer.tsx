@@ -127,7 +127,7 @@ export function Footer() {
               <span aria-hidden className="text-amber-500">
                 ★
               </span>{" "}
-              <span className="font-medium text-gray-700">4.8</span> average from 2,300+ rentals
+              <span className="font-medium text-gray-700">4.8</span> average from 100+ clients
             </p>
           </div>
 

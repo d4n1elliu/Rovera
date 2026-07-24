@@ -19,7 +19,7 @@ const TRUST_CHIPS = [
 ];
 
 const STATS = [
-  { value: "2,300+", label: "rentals completed" },
+  { value: "100+", label: "happy clients" },
   { value: "4.8 ★", label: "average rating" },
   { value: "5", label: "cities served" },
   { value: "24/7", label: "roadside support" },
@@ -112,7 +112,7 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
               <span aria-hidden className="text-amber-500">
                 ★★★★★
               </span>{" "}
-              <span className="font-semibold text-gray-900">4.8</span> from 2,300+ rentals
+              <span className="font-semibold text-gray-900">4.8</span> from 100+ clients
             </p>
           </div>
 
