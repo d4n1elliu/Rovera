@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getRentalHistory } from "@/backend/services/reservation.service";
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET /api/orders?email=… — rental history data (was rental_history.php)
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get("email");

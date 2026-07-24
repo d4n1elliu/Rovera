@@ -3,14 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write .",
-    "db:seed": "tsx src/backend/prisma/seed.ts",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "lint": "next lint",
+  "postinstall": "prisma generate"
   },
   "prisma": {
     "schema": "src/backend/prisma/schema.prisma",

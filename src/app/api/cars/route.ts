@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCars } from "@/backend/services/car.service";
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET /api/cars?bodyType=suv&fuelType=hybrid&minPrice=30&maxPrice=100&query=toyota
 export async function GET(request: NextRequest) {
   try {

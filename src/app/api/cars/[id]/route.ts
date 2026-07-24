@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCarById } from "@/backend/services/car.service";
 
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 // GET /api/cars/:id
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   try {
