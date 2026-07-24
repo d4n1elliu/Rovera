@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     question: "Can I cancel my reservation?",
-    answer: "Yes — cancellations are free up to 24 hours before your pickup time.",
+    answer: "Yes, cancellations are free up to 24 hours before your pickup time.",
   },
   {
     question: "Is insurance included?",
