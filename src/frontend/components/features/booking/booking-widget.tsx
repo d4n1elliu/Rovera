@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const LOCATIONS = ["New York", "Los Angeles", "San Francisco", "Miami", "Chicago"];
+const LOCATIONS = ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"];
 
 function toDateInput(date: Date) {
   const offset = date.getTimezoneOffset();

@@ -21,7 +21,7 @@ const LINK_COLUMNS = [
   },
 ];
 
-const LOCATIONS = ["New York", "Los Angeles", "San Francisco", "Miami", "Chicago"];
+const LOCATIONS = ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"];
 const PAYMENT_METHODS = ["Visa", "Mastercard", "Amex", "Apple Pay"];
 
 export function Footer() {

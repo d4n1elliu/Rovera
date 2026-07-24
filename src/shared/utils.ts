@@ -5,8 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
+export function formatPrice(amount: number, currency = "AUD") {
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency }).format(amount);
 }
 
 export function daysBetween(start: Date, end: Date) {
@@ -15,5 +15,5 @@ export function daysBetween(start: Date, end: Date) {
 }
 
 export function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(date));
+  return new Intl.DateTimeFormat("en-AU", { dateStyle: "medium" }).format(new Date(date));
 }
