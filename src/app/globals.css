@@ -5,3 +5,18 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Native date inputs style their inner segments with browser font metrics;
+   normalise them so they match sibling fields (e.g. the booking pill select). */
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  color: #111827;
+  padding: 0;
+}

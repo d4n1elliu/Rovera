@@ -13,7 +13,7 @@ function toDateInput(date: Date) {
 const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-5 py-2";
 const labelClass = "text-[10px] font-semibold uppercase tracking-widest text-gray-500";
 const fieldClass =
-  "w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none";
+  "h-6 w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none";
 
 export function BookingWidget() {
   const router = useRouter();
