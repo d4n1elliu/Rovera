@@ -160,6 +160,14 @@ export function Footer() {
           <p>
             © 2025–{new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
+          <nav className="flex items-center gap-6" aria-label="Legal">
+            <Link href="/terms" className="transition-colors hover:text-gray-900">
+              Terms of Use
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-gray-900">
+              Privacy Policy
+            </Link>
+          </nav>
           <ul className="flex items-center gap-2" aria-label="Accepted payment methods">
             {PAYMENT_METHODS.map(({ name, Icon }) => (
               <li key={name} title={name}>
