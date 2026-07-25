@@ -1,11 +1,26 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatPrice } from "@/shared/utils";
+import { formatPrice, pluralise } from "@/shared/utils";
 import { carRating } from "@/frontend/lib/rating";
+import type { Quote } from "@/shared/lib/pricing";
 import type { Car } from "@/shared/types";
 
-export function CarCard({ car, priority = false }: { car: Car; priority?: boolean }) {
+export function CarCard({
+  car,
+  priority = false,
+  quote,
+  searchQuery,
+}: {
+  car: Car;
+  priority?: boolean;
+  /** Total for the searched window, when the renter arrived with dates. */
+  quote?: Quote | null;
+  /** The search as a query string, carried into the reservation so the renter
+   *  does not re-enter dates, age or promo code they have already given. */
+  searchQuery?: string;
+}) {
   const { rating, reviews } = carRating(car.id);
+  const bookHref = `/reservation?carId=${car.id}${searchQuery ? `&${searchQuery}` : ""}`;
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md">
@@ -49,6 +64,25 @@ export function CarCard({ car, priority = false }: { car: Car; priority?: boolea
           </p>
         </div>
 
+        {quote && (
+          <div className="rounded-md bg-gray-50 px-3 py-2 text-sm">
+            <p>
+              <span className="font-semibold">{formatPrice(quote.total)}</span>{" "}
+              <span className="text-gray-500">total · {pluralise(quote.days, "day")}</span>
+            </p>
+            {(quote.youngDriverFee > 0 || quote.discount > 0) && (
+              <p className="mt-0.5 text-xs text-gray-500">
+                {[
+                  quote.youngDriverFee > 0 && `young driver +${formatPrice(quote.youngDriverFee)}`,
+                  quote.promotion && `${quote.promotion.code} −${formatPrice(quote.discount)}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="mt-auto flex gap-2 pt-2">
           <Link
             href={`/cars/${car.id}`}
@@ -57,7 +91,7 @@ export function CarCard({ car, priority = false }: { car: Car; priority?: boolea
             Details
           </Link>
           <Link
-            href={`/reservation?carId=${car.id}`}
+            href={bookHref}
             className="relative z-10 flex h-9 flex-1 items-center justify-center rounded-md bg-brand text-sm font-medium text-white transition-colors hover:bg-brand-dark"
           >
             Book now
