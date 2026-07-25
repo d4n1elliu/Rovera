@@ -17,6 +17,13 @@ input[type="date"] {
   font-weight: 500 !important;
 }
 
+/* iOS Safari centres the date value inside the input; keep it left-aligned
+   under its label like the other pill fields. */
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  line-height: 1.5rem;
+}
+
 input[type="date"]::-webkit-datetime-edit,
 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="date"]::-webkit-datetime-edit-text,
