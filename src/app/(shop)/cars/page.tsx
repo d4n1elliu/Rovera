@@ -1,25 +1,57 @@
 import type { Metadata } from "next";
-import { getCars } from "@/backend/services/car.service";
+import { searchAvailableCars } from "@/backend/services/car.service";
 import { CarGrid } from "@/frontend/components/features/cars/car-grid";
 import { SearchBar } from "@/frontend/components/features/cars/search-bar";
-import type { Car } from "@/shared/types";
+import { SearchEmptyState } from "@/frontend/components/features/cars/search-empty-state";
+import { SearchSummary } from "@/frontend/components/features/cars/search-summary";
+import { carSearchQuery, parseCarSearch } from "@/shared/schemas/car-search.schema";
+import { toDateInput } from "@/shared/lib/datetime";
+import type { Quote } from "@/shared/lib/pricing";
 
 export const metadata: Metadata = { title: "Browse cars" };
+
+// Rendered per-request: results depend on live reservations for the searched
+// window, so nothing here can be cached ahead of time.
+export const dynamic = "force-dynamic";
 
 export default async function CarsPage({
   searchParams,
 }: {
-  searchParams: { bodyType?: string; fuelType?: string; minPrice?: string; maxPrice?: string };
+  searchParams: Record<string, string | undefined>;
 }) {
-  const cars = (await getCars(searchParams)) as unknown as Car[];
+  const search = parseCarSearch(searchParams);
+  const results = await searchAvailableCars(search);
+
+  // Rebuilt from the parsed search rather than the raw URL, so a parameter we
+  // rejected is not passed on to the reservation form.
+  const searchQuery = carSearchQuery({
+    pickup: search.pickupAt ? toDateInput(search.pickupAt) : undefined,
+    return: search.returnAt ? toDateInput(search.returnAt) : undefined,
+    driverAge: String(search.driverAge),
+    promo: search.promoCode ?? undefined,
+  });
+
+  const quotes: Record<string, Quote> = {};
+  for (const result of results.results) {
+    if (result.quote) quotes[result.car.id] = result.quote;
+  }
 
   return (
     <div className="w-full space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold">Browse cars</h1>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <SearchSummary search={search} results={results} />
         <SearchBar />
       </div>
-      <CarGrid cars={cars} />
+
+      {results.results.length === 0 ? (
+        <SearchEmptyState results={results} />
+      ) : (
+        <CarGrid
+          cars={results.results.map((result) => result.car)}
+          quotes={quotes}
+          searchQuery={searchQuery}
+        />
+      )}
     </div>
   );
 }

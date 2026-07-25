@@ -22,6 +22,10 @@ export type Location = (typeof LOCATIONS)[number];
 
 export const MAX_RENTAL_DAYS = 30;
 
+/** Reservation statuses that still hold a car. A cancelled or completed
+ *  booking releases it, so only these block a new rental. */
+export const BLOCKING_RESERVATION_STATUSES = ["pending", "confirmed"] as const;
+
 /** Shortest bookable rental. Rentals are scheduled by the hour, so this is
  *  expressed in hours rather than days. */
 export const MIN_RENTAL_HOURS = 4;
