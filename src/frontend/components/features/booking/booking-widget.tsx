@@ -1,35 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LocationSelect } from "@/frontend/components/features/booking/location-select";
-import { DEFAULT_RENTAL_DAYS, LOCATIONS } from "@/shared/constants";
+import { TimeSelect } from "@/frontend/components/features/booking/time-select";
+import {
+  DEFAULT_PICKUP_TIME,
+  DEFAULT_RENTAL_DAYS,
+  DEFAULT_RETURN_TIME,
+  LOCATIONS,
+} from "@/shared/constants";
+import { addDays, combineDateTime, nextSlotAfter, toDateInput } from "@/shared/lib/datetime";
 
-function toDateInput(date: Date) {
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60 * 1000).toISOString().slice(0, 10);
-}
-
-const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-5 py-2";
+const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-2 sm:px-5";
 const labelClass = "text-[10px] font-semibold uppercase tracking-widest text-gray-500";
-const fieldClass =
-  "h-6 w-full bg-transparent text-sm font-medium text-gray-900 focus:outline-none";
+const dateClass =
+  "h-6 min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-900 focus:outline-none";
 
 function Divider() {
   return <span aria-hidden className="hidden h-9 w-px shrink-0 bg-gray-200 sm:block" />;
 }
 
+/** Keep the return strictly after the pickup: fall forward to the next slot on
+ *  the pickup day, or to the following day when the branch has already closed. */
+function correctReturn(
+  pickupDate: string,
+  pickupTime: string,
+  returnDate: string,
+  returnTime: string
+) {
+  if (!pickupDate || !returnDate) return { returnDate, returnTime };
+
+  const pickupAt = combineDateTime(pickupDate, pickupTime);
+  const returnAt = combineDateTime(returnDate, returnTime);
+  if (returnAt > pickupAt) return { returnDate, returnTime };
+
+  const laterSlot = nextSlotAfter(pickupTime);
+  return laterSlot
+    ? { returnDate: pickupDate, returnTime: laterSlot }
+    : { returnDate: addDays(pickupDate, 1), returnTime: pickupTime };
+}
+
 export function BookingWidget() {
   const router = useRouter();
+
   const [pickupLocation, setPickupLocation] = useState<string>(LOCATIONS[0]);
   const [dropoffLocation, setDropoffLocation] = useState<string>(LOCATIONS[0]);
   const [sameLocation, setSameLocation] = useState(true);
-  const [pickup, setPickup] = useState(() => toDateInput(new Date()));
-  const [dropoff, setDropoff] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + DEFAULT_RENTAL_DAYS);
-    return toDateInput(d);
-  });
+
+  // Dates are resolved after mount: "today" depends on the viewer's timezone,
+  // and deriving it during render would mismatch the server-rendered markup.
+  const [today, setToday] = useState("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [pickupTime, setPickupTime] = useState(DEFAULT_PICKUP_TIME);
+  const [returnTime, setReturnTime] = useState(DEFAULT_RETURN_TIME);
+
+  useEffect(() => {
+    const now = toDateInput(new Date());
+    setToday(now);
+    setPickupDate(now);
+    setReturnDate(addDays(now, DEFAULT_RENTAL_DAYS));
+  }, []);
 
   // While the branches are linked, the drop-off follows the pickup so that
   // unlinking them reveals the city the renter already chose.
@@ -43,77 +75,120 @@ export function BookingWidget() {
     if (checked) setDropoffLocation(pickupLocation);
   }
 
+  function applyReturn(
+    nextPickupDate: string,
+    nextPickupTime: string,
+    nextReturnDate: string,
+    nextReturnTime: string
+  ) {
+    const corrected = correctReturn(
+      nextPickupDate,
+      nextPickupTime,
+      nextReturnDate,
+      nextReturnTime
+    );
+    setReturnDate(corrected.returnDate);
+    setReturnTime(corrected.returnTime);
+  }
+
+  function onPickupDateChange(value: string) {
+    setPickupDate(value);
+    applyReturn(value, pickupTime, returnDate, returnTime);
+  }
+
+  function onPickupTimeChange(value: string) {
+    setPickupTime(value);
+    applyReturn(pickupDate, value, returnDate, returnTime);
+  }
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams({
       pickupLocation,
       dropoffLocation: sameLocation ? pickupLocation : dropoffLocation,
-      pickup,
-      return: dropoff,
+      pickup: pickupDate,
+      pickupTime,
+      return: returnDate,
+      returnTime,
     });
     router.push(`/cars?${params.toString()}`);
   }
 
   return (
-    <div className={sameLocation ? "mx-auto w-full max-w-3xl" : "mx-auto w-full max-w-4xl"}>
+    <div className={sameLocation ? "mx-auto w-full max-w-4xl" : "mx-auto w-full max-w-6xl"}>
       <form
         onSubmit={onSubmit}
         aria-label="Find available cars"
         className="flex w-full flex-col divide-y divide-gray-200 rounded-3xl bg-white p-2 shadow-xl ring-1 ring-black/5 sm:flex-row sm:items-center sm:divide-y-0 sm:rounded-full"
       >
-        <label className={segmentClass}>
+        <div className={segmentClass}>
           <span className={labelClass}>{sameLocation ? "Pickup" : "Pickup from"}</span>
           <LocationSelect
             value={pickupLocation}
             onChange={onPickupLocationChange}
             label="Pickup location"
           />
-        </label>
+        </div>
 
         {!sameLocation && (
           <>
             <Divider />
-            <label className={segmentClass}>
+            <div className={segmentClass}>
               <span className={labelClass}>Return to</span>
               <LocationSelect
                 value={dropoffLocation}
                 onChange={setDropoffLocation}
                 label="Drop-off location"
               />
-            </label>
+            </div>
           </>
         )}
 
         <Divider />
 
-        <label className={segmentClass}>
+        <div className={segmentClass}>
           <span className={labelClass}>From</span>
-          <input
-            type="date"
-            value={pickup}
-            min={toDateInput(new Date())}
-            onChange={(e) => {
-              setPickup(e.target.value);
-              if (e.target.value > dropoff) setDropoff(e.target.value);
-            }}
-            className={fieldClass}
-            required
-          />
-        </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={pickupDate}
+              min={today}
+              onChange={(e) => onPickupDateChange(e.target.value)}
+              aria-label="Pickup date"
+              className={dateClass}
+              required
+            />
+            <TimeSelect
+              value={pickupTime}
+              onChange={onPickupTimeChange}
+              label="Pickup time"
+              className="w-[92px] shrink-0"
+            />
+          </div>
+        </div>
 
         <Divider />
 
-        <label className={segmentClass}>
+        <div className={segmentClass}>
           <span className={labelClass}>Until</span>
-          <input
-            type="date"
-            value={dropoff}
-            min={pickup}
-            onChange={(e) => setDropoff(e.target.value)}
-            className={fieldClass}
-            required
-          />
-        </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={returnDate}
+              min={pickupDate || today}
+              onChange={(e) => applyReturn(pickupDate, pickupTime, e.target.value, returnTime)}
+              aria-label="Return date"
+              className={dateClass}
+              required
+            />
+            <TimeSelect
+              value={returnTime}
+              onChange={(value) => applyReturn(pickupDate, pickupTime, returnDate, value)}
+              label="Return time"
+              className="w-[92px] shrink-0"
+            />
+          </div>
+        </div>
 
         <button
           type="submit"
