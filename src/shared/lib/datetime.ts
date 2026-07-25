@@ -1,4 +1,9 @@
-import { CLOSING_HOUR, OPENING_HOUR, TIME_SLOT_MINUTES } from "@/shared/constants";
+import {
+  CLOSING_HOUR,
+  DEFAULT_PICKUP_TIME,
+  OPENING_HOUR,
+  TIME_SLOT_MINUTES,
+} from "@/shared/constants";
 
 export interface TimeSlot {
   /** 24-hour "HH:mm", used as the form value and URL parameter. */
@@ -51,14 +56,54 @@ export function combineDateTime(dateValue: string, timeValue: string) {
   return new Date(`${dateValue}T${timeValue}`);
 }
 
+const MS_PER_HOUR = 1000 * 60 * 60;
+
 /** Whole hours between two instants, rounded up. */
 export function hoursBetween(start: Date, end: Date) {
-  const ms = end.getTime() - start.getTime();
-  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60)));
+  return Math.max(0, Math.ceil((end.getTime() - start.getTime()) / MS_PER_HOUR));
+}
+
+/** Exact hours between two instants, used where rounding up would let a
+ *  too-short rental slip past a minimum-length check. */
+export function exactHoursBetween(start: Date, end: Date) {
+  return (end.getTime() - start.getTime()) / MS_PER_HOUR;
+}
+
+/** Midnight at the start of the given day, in local time. */
+export function startOfDay(date: Date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  return start;
 }
 
 /** The first bookable slot strictly after the given time, or null if the
  *  branch closes first. */
 export function nextSlotAfter(timeValue: string) {
   return TIME_SLOTS.find((slot) => slot.value > timeValue)?.value ?? null;
+}
+
+/** The first bookable slot at or after the given time, or null if the branch
+ *  closes first. */
+export function slotAtOrAfter(timeValue: string) {
+  return TIME_SLOTS.find((slot) => slot.value >= timeValue)?.value ?? null;
+}
+
+/** The "HH:mm" slot value matching a Date's local wall-clock time. */
+export function timeValueOf(date: Date) {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+/** The soonest pickup a renter could actually book: the usual default time if
+ *  it is still ahead, otherwise the next slot today, rolling to tomorrow once
+ *  the branch has closed. Prevents the widget opening on a past pickup. */
+export function nextBookableSlot(now: Date) {
+  const date = toDateInput(now);
+  const currentTime = timeValueOf(now);
+
+  if (DEFAULT_PICKUP_TIME > currentTime) {
+    return { date, time: DEFAULT_PICKUP_TIME };
+  }
+
+  const slot = nextSlotAfter(currentTime);
+  return slot ? { date, time: slot } : { date: addDays(date, 1), time: DEFAULT_PICKUP_TIME };
 }

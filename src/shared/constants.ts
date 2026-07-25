@@ -22,6 +22,10 @@ export type Location = (typeof LOCATIONS)[number];
 
 export const MAX_RENTAL_DAYS = 30;
 
+/** Shortest bookable rental. Rentals are scheduled by the hour, so this is
+ *  expressed in hours rather than days. */
+export const MIN_RENTAL_HOURS = 4;
+
 /* --------------  Driver eligibility and pricing ---------------- */
 
 export const MIN_DRIVER_AGE = 21;

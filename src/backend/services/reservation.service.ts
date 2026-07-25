@@ -3,7 +3,6 @@ import { carRepository } from "@/backend/repositories/car.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
 import { quoteRental } from "@/shared/lib/pricing";
-import { MAX_RENTAL_DAYS } from "@/shared/constants";
 
 export async function createReservation(rawInput: unknown) {
   const input = reservationSchema.parse(rawInput);
@@ -18,10 +17,6 @@ export async function createReservation(rawInput: unknown) {
     driverAge: input.driverAge,
     promoCode: input.promoCode,
   });
-
-  if (quote.days > MAX_RENTAL_DAYS) {
-    throw new Error(`Rentals are limited to ${MAX_RENTAL_DAYS} days`);
-  }
 
   const overlaps = await reservationRepository.hasOverlap(
     input.carId,
