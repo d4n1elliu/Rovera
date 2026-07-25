@@ -35,7 +35,7 @@ export function PromoCodeField({
       autoComplete="off"
       spellCheck={false}
       className={cn(
-        "h-9 w-32 rounded-full border bg-white px-3 text-sm font-medium uppercase tracking-wide text-gray-900 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light/40",
+        "h-9 w-32 rounded-full border bg-white px-3 text-center text-sm font-medium uppercase tracking-wide text-gray-900 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light/40",
         invalid
           ? "border-red-400"
           : applied
