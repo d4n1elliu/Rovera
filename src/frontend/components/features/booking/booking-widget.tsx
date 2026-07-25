@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DriverAgeSelect } from "@/frontend/components/features/booking/driver-age-select";
 import { LocationSelect } from "@/frontend/components/features/booking/location-select";
+import { PromoCodeField } from "@/frontend/components/features/booking/promo-code-field";
 import { TimeSelect } from "@/frontend/components/features/booking/time-select";
+import { evaluatePromoCode, promotionLabel } from "@/shared/config/promotions";
+import { billableDays } from "@/shared/lib/pricing";
 import {
   DEFAULT_DRIVER_AGE,
   DEFAULT_PICKUP_TIME,
@@ -62,10 +65,22 @@ export function BookingWidget() {
   const [pickupTime, setPickupTime] = useState(DEFAULT_PICKUP_TIME);
   const [returnTime, setReturnTime] = useState(DEFAULT_RETURN_TIME);
   const [driverAge, setDriverAge] = useState(String(DEFAULT_DRIVER_AGE));
+  const [promoCode, setPromoCode] = useState("");
 
   // The picker starts at MIN_DRIVER_AGE, so an ineligible age cannot be
   // selected here; the schema still re-checks bounds server-side.
   const showYoungDriverFee = Number(driverAge) < YOUNG_DRIVER_AGE;
+
+  // Evaluated against the selected dates, since some codes need a minimum
+  // rental length. Dates are empty until the mount effect runs.
+  const days =
+    pickupDate && returnDate
+      ? billableDays(
+          combineDateTime(pickupDate, pickupTime),
+          combineDateTime(returnDate, returnTime)
+        )
+      : 0;
+  const promoStatus = evaluatePromoCode(promoCode, days);
 
   useEffect(() => {
     const now = toDateInput(new Date());
@@ -114,6 +129,9 @@ export function BookingWidget() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Searching with a code that does not exist would imply a discount the
+    // renter will never receive, so make them correct or clear it first.
+    if (promoStatus.kind === "invalid") return;
 
     const params = new URLSearchParams({
       pickupLocation,
@@ -124,6 +142,8 @@ export function BookingWidget() {
       returnTime,
       driverAge,
     });
+    if (promoStatus.kind !== "empty") params.set("promo", promoStatus.promotion.code);
+
     router.push(`/cars?${params.toString()}`);
   }
 
@@ -226,6 +246,13 @@ export function BookingWidget() {
           Driver age
           <DriverAgeSelect value={driverAge} onChange={setDriverAge} />
         </span>
+
+        <PromoCodeField
+          value={promoCode}
+          onChange={setPromoCode}
+          invalid={promoStatus.kind === "invalid"}
+          applied={promoStatus.kind === "applied"}
+        />
       </div>
 
       <p className="mt-2 text-center text-sm text-gray-600">
@@ -235,6 +262,25 @@ export function BookingWidget() {
             )}/day young-driver surcharge.`
           : `Minimum driver age ${MIN_DRIVER_AGE}.`}
       </p>
+
+      {promoStatus.kind !== "empty" && (
+        <p
+          role={promoStatus.kind === "invalid" ? "alert" : undefined}
+          className={`mt-1 text-center text-sm ${
+            promoStatus.kind === "invalid"
+              ? "text-red-600"
+              : promoStatus.kind === "applied"
+                ? "text-emerald-700"
+                : "text-amber-700"
+          }`}
+        >
+          {promoStatus.kind === "invalid"
+            ? "That promo code isn’t valid."
+            : promoStatus.kind === "applied"
+              ? `${promoStatus.promotion.code} applied — ${promotionLabel(promoStatus.promotion)}.`
+              : `${promoStatus.promotion.code} needs ${promoStatus.promotion.minDays}+ days — extend your dates to use it.`}
+        </p>
+      )}
     </div>
   );
 }

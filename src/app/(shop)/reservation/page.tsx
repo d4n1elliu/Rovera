@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Reservation" };
 export default async function ReservationPage({
   searchParams,
 }: {
-  searchParams: { carId?: string; driverAge?: string };
+  searchParams: { carId?: string; driverAge?: string; promo?: string };
 }) {
   if (!searchParams.carId) redirect("/cars");
 
@@ -29,7 +29,11 @@ export default async function ReservationPage({
           {car.make} {car.model} · {formatPrice(car.pricePerDay)}/day
         </p>
       </div>
-      <ReservationForm carId={car.id} defaultDriverAge={driverAge} />
+      <ReservationForm
+        carId={car.id}
+        defaultDriverAge={driverAge}
+        defaultPromoCode={searchParams.promo ?? ""}
+      />
     </div>
   );
 }
