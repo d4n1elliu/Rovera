@@ -25,3 +25,17 @@ export const MIN_DRIVER_AGE = 21;
 
 /** Rental length preselected in the booking search widget. */
 export const DEFAULT_RENTAL_DAYS = 3;
+
+/* ----------------------- Branch hours ------------------------------------
+ * Rentals are scheduled by the hour, so pickup and return times are limited
+ * to the hours a branch is open. */
+
+export const OPENING_HOUR = 6;
+export const CLOSING_HOUR = 22;
+
+/** Granularity of selectable pickup/return times, in minutes. */
+export const TIME_SLOT_MINUTES = 30;
+
+/** Times preselected in the booking search widget. */
+export const DEFAULT_PICKUP_TIME = "10:00";
+export const DEFAULT_RETURN_TIME = "10:00";
