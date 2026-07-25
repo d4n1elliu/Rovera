@@ -105,12 +105,13 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
             </a>
           </div>
 
-          {/* On mobile the stacked pill is too tall to straddle the seam */}
-          <div className="relative z-10 mt-auto pb-8 pt-10 sm:pb-0 sm:pt-0 sm:translate-y-1/2">
-            <BookingWidget />
-          </div>
         </div>
       </section>
+
+      {/* Booking search — its own band on mobile, straddling the hero seam on sm+ */}
+      <div className="relative z-10 bg-sky-50 px-6 py-8 sm:-mt-10 sm:bg-transparent sm:px-10 sm:py-0 lg:px-14">
+        <BookingWidget />
+      </div>
 
       {/* About — light mint */}
       <section className="bg-sky-50 px-6 pb-16 pt-16 sm:px-10 sm:pt-24 lg:px-14">
