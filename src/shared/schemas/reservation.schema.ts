@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { MAX_DRIVER_AGE, MIN_DRIVER_AGE } from "@/shared/constants";
+import { startOfDay } from "@/shared/lib/datetime";
+import { validateRentalWindow } from "@/shared/lib/rental-rules";
 
 export const reservationSchema = z
   .object({
@@ -17,9 +19,21 @@ export const reservationSchema = z
     pickupDate: z.coerce.date(),
     returnDate: z.coerce.date(),
   })
-  .refine((data) => data.returnDate > data.pickupDate, {
-    message: "Return date must be after pickup date",
-    path: ["returnDate"],
+  .superRefine((data, ctx) => {
+    // This form collects dates without times, so a booking made later today
+    // is still valid: compare against the start of today, not the instant.
+    const error = validateRentalWindow(
+      data.pickupDate,
+      data.returnDate,
+      startOfDay(new Date())
+    );
+    if (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error.message,
+        path: [error.code === "past" ? "pickupDate" : "returnDate"],
+      });
+    }
   });
 
 export type ReservationInput = z.infer<typeof reservationSchema>;

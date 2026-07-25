@@ -7,17 +7,22 @@ interface TimeSelectProps {
   value: string;
   onChange: (value: string) => void;
   label: string;
+  /** Earliest selectable slot, e.g. the next slot still ahead of now when the
+   *  chosen date is today. Slots before it are not offered at all. */
+  minTime?: string;
   className?: string;
 }
 
 /** Pickup/return time picker limited to slots within branch opening hours. */
-export function TimeSelect({ value, onChange, label, className }: TimeSelectProps) {
+export function TimeSelect({ value, onChange, label, minTime, className }: TimeSelectProps) {
+  const options = minTime ? TIME_SLOTS.filter((slot) => slot.value >= minTime) : TIME_SLOTS;
+
   return (
     <BareSelect
       value={value}
       onChange={onChange}
       label={label}
-      options={TIME_SLOTS}
+      options={options}
       className={className}
     />
   );

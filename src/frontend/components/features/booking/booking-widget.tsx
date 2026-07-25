@@ -15,10 +15,21 @@ import {
   DEFAULT_RETURN_TIME,
   LOCATIONS,
   MIN_DRIVER_AGE,
+  MIN_RENTAL_HOURS,
   YOUNG_DRIVER_AGE,
   YOUNG_DRIVER_FEE_PER_DAY,
 } from "@/shared/constants";
-import { addDays, combineDateTime, nextSlotAfter, toDateInput } from "@/shared/lib/datetime";
+import {
+  addDays,
+  combineDateTime,
+  exactHoursBetween,
+  nextBookableSlot,
+  nextSlotAfter,
+  slotAtOrAfter,
+  timeValueOf,
+  toDateInput,
+} from "@/shared/lib/datetime";
+import { validateRentalWindow } from "@/shared/lib/rental-rules";
 import { formatPrice } from "@/shared/utils";
 
 const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-2 sm:px-5";
@@ -30,8 +41,9 @@ function Divider() {
   return <span aria-hidden className="hidden h-9 w-px shrink-0 bg-gray-200 sm:block" />;
 }
 
-/** Keep the return strictly after the pickup: fall forward to the next slot on
- *  the pickup day, or to the following day when the branch has already closed. */
+/** Keep the return at least the minimum rental length after the pickup. Only
+ *  windows that are already invalid are moved, so a longer return the renter
+ *  chose deliberately is left alone. */
 function correctReturn(
   pickupDate: string,
   pickupTime: string,
@@ -42,11 +54,21 @@ function correctReturn(
 
   const pickupAt = combineDateTime(pickupDate, pickupTime);
   const returnAt = combineDateTime(returnDate, returnTime);
-  if (returnAt > pickupAt) return { returnDate, returnTime };
+  if (exactHoursBetween(pickupAt, returnAt) >= MIN_RENTAL_HOURS) {
+    return { returnDate, returnTime };
+  }
 
-  const laterSlot = nextSlotAfter(pickupTime);
-  return laterSlot
-    ? { returnDate: pickupDate, returnTime: laterSlot }
+  // Round the earliest legal return up to the next bookable slot, rolling into
+  // the following day when the branch has already closed.
+  const earliest = new Date(pickupAt.getTime() + MIN_RENTAL_HOURS * 60 * 60 * 1000);
+  const earliestTime = `${String(earliest.getHours()).padStart(2, "0")}:${String(
+    earliest.getMinutes()
+  ).padStart(2, "0")}`;
+  const sameDay = toDateInput(earliest) === pickupDate;
+  const slot = sameDay ? slotAtOrAfter(earliestTime) : null;
+
+  return slot
+    ? { returnDate: pickupDate, returnTime: slot }
     : { returnDate: addDays(pickupDate, 1), returnTime: pickupTime };
 }
 
@@ -57,9 +79,9 @@ export function BookingWidget() {
   const [dropoffLocation, setDropoffLocation] = useState<string>(LOCATIONS[0]);
   const [sameLocation, setSameLocation] = useState(true);
 
-  // Dates are resolved after mount: "today" depends on the viewer's timezone,
-  // and deriving it during render would mismatch the server-rendered markup.
-  const [today, setToday] = useState("");
+  // Resolved after mount: "now" depends on the viewer's timezone, and deriving
+  // it during render would mismatch the server-rendered markup.
+  const [now, setNow] = useState<Date | null>(null);
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [pickupTime, setPickupTime] = useState(DEFAULT_PICKUP_TIME);
@@ -71,22 +93,43 @@ export function BookingWidget() {
   // selected here; the schema still re-checks bounds server-side.
   const showYoungDriverFee = Number(driverAge) < YOUNG_DRIVER_AGE;
 
+  // Dates are empty until the mount effect runs, so there is nothing to check
+  // during the server render.
+  const hasDates = Boolean(pickupDate && returnDate);
+  const pickupAt = hasDates ? combineDateTime(pickupDate, pickupTime) : null;
+  const returnAt = hasDates ? combineDateTime(returnDate, returnTime) : null;
+
+  const windowError =
+    now && pickupAt && returnAt ? validateRentalWindow(pickupAt, returnAt, now) : null;
+
+  // Earliest date and time the renter can still be served today. Slots that
+  // have already passed are not offered, rather than offered and then refused.
+  const soonest = now ? nextBookableSlot(now) : null;
+  const minDate = soonest?.date ?? "";
+  const minPickupTime =
+    now && pickupDate === toDateInput(now)
+      ? (nextSlotAfter(timeValueOf(now)) ?? undefined)
+      : undefined;
+
   // Evaluated against the selected dates, since some codes need a minimum
-  // rental length. Dates are empty until the mount effect runs.
-  const days =
-    pickupDate && returnDate
-      ? billableDays(
-          combineDateTime(pickupDate, pickupTime),
-          combineDateTime(returnDate, returnTime)
-        )
-      : 0;
+  // rental length.
+  const days = pickupAt && returnAt ? billableDays(pickupAt, returnAt) : 0;
   const promoStatus = evaluatePromoCode(promoCode, days);
 
   useEffect(() => {
-    const now = toDateInput(new Date());
-    setToday(now);
-    setPickupDate(now);
-    setReturnDate(addDays(now, DEFAULT_RENTAL_DAYS));
+    // Start from the soonest slot that can still be booked, so the widget
+    // never opens showing a pickup that has already passed.
+    const initial = new Date();
+    const soonest = nextBookableSlot(initial);
+    setNow(initial);
+    setPickupDate(soonest.date);
+    setPickupTime(soonest.time);
+    setReturnDate(addDays(soonest.date, DEFAULT_RENTAL_DAYS));
+
+    // Keep the offered slots honest on a page left open: without this, slots
+    // that have since passed would still be selectable.
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
   }, []);
 
   // While the branches are linked, the drop-off follows the pickup so that
@@ -119,7 +162,14 @@ export function BookingWidget() {
 
   function onPickupDateChange(value: string) {
     setPickupDate(value);
-    applyReturn(value, pickupTime, returnDate, returnTime);
+
+    // Moving onto today can strand the chosen time in the past, so pull it up
+    // to the next slot still available.
+    const earliest = now && value === toDateInput(now) ? nextSlotAfter(timeValueOf(now)) : null;
+    const nextPickupTime = earliest && pickupTime < earliest ? earliest : pickupTime;
+    if (nextPickupTime !== pickupTime) setPickupTime(nextPickupTime);
+
+    applyReturn(value, nextPickupTime, returnDate, returnTime);
   }
 
   function onPickupTimeChange(value: string) {
@@ -129,6 +179,7 @@ export function BookingWidget() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (windowError) return;
     // Searching with a code that does not exist would imply a discount the
     // renter will never receive, so make them correct or clear it first.
     if (promoStatus.kind === "invalid") return;
@@ -185,7 +236,7 @@ export function BookingWidget() {
             <input
               type="date"
               value={pickupDate}
-              min={today}
+              min={minDate}
               onChange={(e) => onPickupDateChange(e.target.value)}
               aria-label="Pickup date"
               className={dateClass}
@@ -195,6 +246,7 @@ export function BookingWidget() {
               value={pickupTime}
               onChange={onPickupTimeChange}
               label="Pickup time"
+              minTime={minPickupTime}
               className="w-[92px] shrink-0"
             />
           </div>
@@ -208,7 +260,7 @@ export function BookingWidget() {
             <input
               type="date"
               value={returnDate}
-              min={pickupDate || today}
+              min={pickupDate || minDate}
               onChange={(e) => applyReturn(pickupDate, pickupTime, e.target.value, returnTime)}
               aria-label="Return date"
               className={dateClass}
@@ -254,6 +306,12 @@ export function BookingWidget() {
           applied={promoStatus.kind === "applied"}
         />
       </div>
+
+      {windowError && (
+        <p role="alert" className="mt-2 text-center text-sm text-red-600">
+          {windowError.message}
+        </p>
+      )}
 
       <p className="mt-2 text-center text-sm text-gray-600">
         {showYoungDriverFee

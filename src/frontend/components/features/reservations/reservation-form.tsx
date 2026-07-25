@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
@@ -10,6 +10,7 @@ import {
 } from "@/frontend/components/features/booking/driver-age-select";
 import { PromoCodeField } from "@/frontend/components/features/booking/promo-code-field";
 import { findPromotion, normalisePromoCode, promotionLabel } from "@/shared/config/promotions";
+import { toDateInput } from "@/shared/lib/datetime";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
 import {
   DEFAULT_DRIVER_AGE,
@@ -22,16 +23,30 @@ export function ReservationForm({
   carId,
   defaultDriverAge = DEFAULT_DRIVER_AGE,
   defaultPromoCode = "",
+  defaultPickupDate = "",
+  defaultReturnDate = "",
 }: {
   carId: string;
   defaultDriverAge?: number;
   defaultPromoCode?: string;
+  defaultPickupDate?: string;
+  defaultReturnDate?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [driverAge, setDriverAge] = useState(() => normaliseDriverAge(defaultDriverAge));
   const [promoCode, setPromoCode] = useState(() => normalisePromoCode(defaultPromoCode));
+
+  // Resolved after mount: "today" depends on the viewer's timezone, so
+  // deriving it during render would mismatch the server-rendered markup.
+  const [today, setToday] = useState("");
+  const [pickupDate, setPickupDate] = useState(defaultPickupDate);
+  const [returnDate, setReturnDate] = useState(defaultReturnDate);
+
+  useEffect(() => {
+    setToday(toDateInput(new Date()));
+  }, []);
 
   const promoIsInvalid = promoCode.trim() !== "" && !findPromotion(promoCode);
 
@@ -113,11 +128,27 @@ export function ReservationForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm text-gray-600">
           Pickup date
-          <Input name="pickupDate" type="date" required className="mt-1" />
+          <Input
+            name="pickupDate"
+            type="date"
+            value={pickupDate}
+            min={today}
+            onChange={(e) => setPickupDate(e.target.value)}
+            required
+            className="mt-1"
+          />
         </label>
         <label className="text-sm text-gray-600">
           Return date
-          <Input name="returnDate" type="date" required className="mt-1" />
+          <Input
+            name="returnDate"
+            type="date"
+            value={returnDate}
+            min={pickupDate || today}
+            onChange={(e) => setReturnDate(e.target.value)}
+            required
+            className="mt-1"
+          />
         </label>
       </div>
 
