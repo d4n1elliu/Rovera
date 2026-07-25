@@ -88,7 +88,7 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
 
         <div className="relative flex min-h-[70vh] flex-col px-6 pt-10 sm:px-10 lg:px-14 lg:pt-14">
           <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
               Drive the future
               <br />
               with Rovera.
@@ -105,14 +105,15 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
             </a>
           </div>
 
-          <div className="relative z-10 mt-auto translate-y-1/2">
+          {/* On mobile the stacked pill is too tall to straddle the seam */}
+          <div className="relative z-10 mt-auto pb-8 pt-10 sm:pb-0 sm:pt-0 sm:translate-y-1/2">
             <BookingWidget />
           </div>
         </div>
       </section>
 
       {/* About — light mint */}
-      <section className="bg-sky-50 px-6 pb-16 pt-24 sm:px-10 lg:px-14">
+      <section className="bg-sky-50 px-6 pb-16 pt-16 sm:px-10 sm:pt-24 lg:px-14">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
             <Eyebrow>Renting made simple</Eyebrow>

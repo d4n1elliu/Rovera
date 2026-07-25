@@ -68,7 +68,7 @@ export function HeroCarousel() {
         </svg>
       </button>
 
-      <div className="absolute bottom-20 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+      <div className="absolute bottom-20 left-1/2 z-20 hidden -translate-x-1/2 gap-2 sm:flex">
         {SLIDES.map((src, i) => (
           <button
             key={src}

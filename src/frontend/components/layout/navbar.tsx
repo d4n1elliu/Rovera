@@ -11,8 +11,8 @@ export function Navbar() {
           <span className="text-lg">{siteConfig.name}</span>
         </Link>
 
-        <div className="flex items-center gap-6">
-          <ul className="flex items-center gap-6 text-sm">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <ul className="flex items-center gap-3 text-sm sm:gap-6">
             {siteConfig.nav.map((item) => (
               <li key={item.href}>
                 <Link
