@@ -1,3 +1,5 @@
+import { LOCATIONS } from "@/shared/constants";
+
 export const siteConfig = {
   name: "Rovera",
   description: "Rent the right car for every journey.",
@@ -10,7 +12,7 @@ export const siteConfig = {
     { label: "Help", href: "/help" },
   ],
   contactCta: { label: "Contact us", href: "/help" },
-  locations: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"],
+  locations: LOCATIONS,
   socialProof: {
     rating: "4.8",
     clients: "100+",

@@ -2,8 +2,7 @@ import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
-import { daysBetween } from "@/shared/utils";
-import { MAX_RENTAL_DAYS } from "@/shared/constants";
+import { quoteRental } from "@/shared/lib/pricing";
 
 export async function createReservation(rawInput: unknown) {
   const input = reservationSchema.parse(rawInput);
@@ -11,8 +10,13 @@ export async function createReservation(rawInput: unknown) {
   const car = await carRepository.findById(input.carId);
   if (!car) throw new Error("Car not found");
 
-  const days = daysBetween(input.pickupDate, input.returnDate);
-  if (days > MAX_RENTAL_DAYS) throw new Error(`Rentals are limited to ${MAX_RENTAL_DAYS} days`);
+  const quote = quoteRental({
+    pricePerDay: car.pricePerDay,
+    pickupAt: input.pickupDate,
+    returnAt: input.returnDate,
+    driverAge: input.driverAge,
+    promoCode: input.promoCode,
+  });
 
   const overlaps = await reservationRepository.hasOverlap(
     input.carId,
@@ -31,7 +35,7 @@ export async function createReservation(rawInput: unknown) {
     },
     pickupDate: input.pickupDate,
     returnDate: input.returnDate,
-    totalPrice: days * car.pricePerDay,
+    totalPrice: quote.total,
   });
 }
 

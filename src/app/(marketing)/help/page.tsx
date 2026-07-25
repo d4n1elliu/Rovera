@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { MIN_DRIVER_AGE } from "@/shared/constants";
 
 export const metadata: Metadata = { title: "Help & FAQ" };
 
 const faqs = [
   {
     question: "What do I need to rent a car?",
-    answer: "A valid driver's license, a credit card in your name, and you must be at least 21.",
+    answer: `A valid driver's licence, a credit card in your name, and you must be at least ${MIN_DRIVER_AGE}.`,
   },
   {
     question: "Can I cancel my reservation?",

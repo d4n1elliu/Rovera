@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MIN_DRIVER_AGE, YOUNG_DRIVER_AGE } from "@/shared/constants";
 
 export const metadata: Metadata = { title: "Terms of Use" };
 
@@ -9,7 +10,7 @@ const sections = [
   },
   {
     heading: "2. Eligibility and driver requirements",
-    body: "To rent a vehicle you must be at least 21 years of age, hold a valid driver's licence, and provide a credit card in your own name at the time of booking. International renters must hold a licence in English or an accredited translation.",
+    body: `To rent a vehicle you must be at least ${MIN_DRIVER_AGE} years of age, hold a full unrestricted driver's licence, and provide a credit card in your own name at the time of booking. Drivers under ${YOUNG_DRIVER_AGE} pay a young-driver surcharge, and some vehicle categories are unavailable to them. International renters must hold a licence in English or an accredited translation.`,
   },
   {
     heading: "3. Bookings and payment",
