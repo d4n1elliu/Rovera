@@ -2,24 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { BODY_TYPES, FUEL_TYPES } from "@/shared/constants";
+import {
+  priceFilterOptions as PRICE_OPTIONS,
+  sortOptions as SORT_OPTIONS,
+} from "@/frontend/config/landing";
 
 const selectClass =
   "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light/40";
-
-const PRICE_OPTIONS = [
-  { label: "Any price", value: "" },
-  { label: "Up to $60/day", value: "60" },
-  { label: "Up to $90/day", value: "90" },
-  { label: "Up to $120/day", value: "120" },
-  { label: "Up to $150/day", value: "150" },
-];
-
-const SORT_OPTIONS = [
-  { label: "Recommended", value: "" },
-  { label: "Price: low to high", value: "price-asc" },
-  { label: "Price: high to low", value: "price-desc" },
-  { label: "Top rated", value: "rating" },
-];
 
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);

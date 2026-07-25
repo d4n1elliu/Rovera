@@ -17,3 +17,6 @@ export type Transmission = (typeof TRANSMISSIONS)[number];
 
 export const MAX_RENTAL_DAYS = 30;
 export const MIN_DRIVER_AGE = 21;
+
+/** Rental length preselected in the booking search widget. */
+export const DEFAULT_RENTAL_DAYS = 3;
