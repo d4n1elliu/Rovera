@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { siteConfig } from "@/frontend/config/site";
+import { DEFAULT_RENTAL_DAYS } from "@/shared/constants";
 
-const LOCATIONS = ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide"];
+const LOCATIONS = siteConfig.locations;
 
 function toDateInput(date: Date) {
   const offset = date.getTimezoneOffset();
@@ -17,11 +19,11 @@ const fieldClass =
 
 export function BookingWidget() {
   const router = useRouter();
-  const [location, setLocation] = useState(LOCATIONS[0]);
+  const [location, setLocation] = useState<string>(LOCATIONS[0]);
   const [pickup, setPickup] = useState(() => toDateInput(new Date()));
   const [dropoff, setDropoff] = useState(() => {
     const d = new Date();
-    d.setDate(d.getDate() + 3);
+    d.setDate(d.getDate() + DEFAULT_RENTAL_DAYS);
     return toDateInput(d);
   });
 

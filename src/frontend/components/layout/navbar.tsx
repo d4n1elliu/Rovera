@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { siteConfig } from "@/frontend/config/site";
+import { PillLink } from "@/frontend/components/ui/pill-link";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0a1730]">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-brand-navy">
       <nav className="flex h-16 w-full items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold text-white">
           <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-lg" />
@@ -24,12 +25,14 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <Link
-            href="/help"
-            className="hidden h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-gray-900 transition-colors hover:bg-blue-50 sm:inline-flex"
+          <PillLink
+            href={siteConfig.contactCta.href}
+            variant="white"
+            size="sm"
+            className="hidden sm:inline-flex"
           >
-            Contact us
-          </Link>
+            {siteConfig.contactCta.label}
+          </PillLink>
         </div>
       </nav>
     </header>

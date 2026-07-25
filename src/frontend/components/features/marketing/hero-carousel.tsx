@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-
-const SLIDES = ["/hero.jpg", "/hero-2.jpg", "/hero-3.jpg"];
-const AUTOPLAY_MS = 7000;
+import { heroSlides as SLIDES, HERO_AUTOPLAY_MS as AUTOPLAY_MS } from "@/frontend/config/landing";
 
 const arrowClass =
   "absolute top-1/2 z-20 -translate-y-1/2 p-3 text-white/70 transition-colors hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60";
