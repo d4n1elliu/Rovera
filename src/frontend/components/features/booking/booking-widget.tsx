@@ -2,15 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DriverAgeSelect } from "@/frontend/components/features/booking/driver-age-select";
 import { LocationSelect } from "@/frontend/components/features/booking/location-select";
 import { TimeSelect } from "@/frontend/components/features/booking/time-select";
 import {
+  DEFAULT_DRIVER_AGE,
   DEFAULT_PICKUP_TIME,
   DEFAULT_RENTAL_DAYS,
   DEFAULT_RETURN_TIME,
   LOCATIONS,
+  MIN_DRIVER_AGE,
+  YOUNG_DRIVER_AGE,
+  YOUNG_DRIVER_FEE_PER_DAY,
 } from "@/shared/constants";
 import { addDays, combineDateTime, nextSlotAfter, toDateInput } from "@/shared/lib/datetime";
+import { formatPrice } from "@/shared/utils";
 
 const segmentClass = "flex min-w-0 flex-1 flex-col gap-0.5 px-4 py-2 sm:px-5";
 const labelClass = "text-[10px] font-semibold uppercase tracking-widest text-gray-500";
@@ -55,6 +61,11 @@ export function BookingWidget() {
   const [returnDate, setReturnDate] = useState("");
   const [pickupTime, setPickupTime] = useState(DEFAULT_PICKUP_TIME);
   const [returnTime, setReturnTime] = useState(DEFAULT_RETURN_TIME);
+  const [driverAge, setDriverAge] = useState(String(DEFAULT_DRIVER_AGE));
+
+  // The picker starts at MIN_DRIVER_AGE, so an ineligible age cannot be
+  // selected here; the schema still re-checks bounds server-side.
+  const showYoungDriverFee = Number(driverAge) < YOUNG_DRIVER_AGE;
 
   useEffect(() => {
     const now = toDateInput(new Date());
@@ -103,6 +114,7 @@ export function BookingWidget() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     const params = new URLSearchParams({
       pickupLocation,
       dropoffLocation: sameLocation ? pickupLocation : dropoffLocation,
@@ -110,6 +122,7 @@ export function BookingWidget() {
       pickupTime,
       return: returnDate,
       returnTime,
+      driverAge,
     });
     router.push(`/cars?${params.toString()}`);
   }
@@ -198,7 +211,7 @@ export function BookingWidget() {
         </button>
       </form>
 
-      <div className="mt-3 flex justify-center">
+      <div className="mt-3 flex flex-col items-center gap-2 sm:flex-row sm:justify-center sm:gap-6">
         <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-600">
           <input
             type="checkbox"
@@ -208,7 +221,20 @@ export function BookingWidget() {
           />
           Return to the same location
         </label>
+
+        <span className="inline-flex items-center gap-2 text-sm text-gray-600">
+          Driver age
+          <DriverAgeSelect value={driverAge} onChange={setDriverAge} />
+        </span>
       </div>
+
+      <p className="mt-2 text-center text-sm text-gray-600">
+        {showYoungDriverFee
+          ? `Drivers under ${YOUNG_DRIVER_AGE} pay a ${formatPrice(
+              YOUNG_DRIVER_FEE_PER_DAY
+            )}/day young-driver surcharge.`
+          : `Minimum driver age ${MIN_DRIVER_AGE}.`}
+      </p>
     </div>
   );
 }

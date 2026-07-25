@@ -9,12 +9,17 @@ export const metadata: Metadata = { title: "Reservation" };
 export default async function ReservationPage({
   searchParams,
 }: {
-  searchParams: { carId?: string };
+  searchParams: { carId?: string; driverAge?: string };
 }) {
   if (!searchParams.carId) redirect("/cars");
 
   const car = await getCarById(searchParams.carId).catch(() => null);
   if (!car) redirect("/cars");
+
+  // Carried over from the search widget when present, so the renter does not
+  // re-enter an age they have already given.
+  const parsedAge = Number(searchParams.driverAge);
+  const driverAge = Number.isInteger(parsedAge) ? parsedAge : undefined;
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-8">
@@ -24,7 +29,7 @@ export default async function ReservationPage({
           {car.make} {car.model} · {formatPrice(car.pricePerDay)}/day
         </p>
       </div>
-      <ReservationForm carId={car.id} />
+      <ReservationForm carId={car.id} defaultDriverAge={driverAge} />
     </div>
   );
 }

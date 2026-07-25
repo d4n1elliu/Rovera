@@ -4,12 +4,31 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
+import {
+  DriverAgeSelect,
+  normaliseDriverAge,
+} from "@/frontend/components/features/booking/driver-age-select";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
+import {
+  DEFAULT_DRIVER_AGE,
+  YOUNG_DRIVER_AGE,
+  YOUNG_DRIVER_FEE_PER_DAY,
+} from "@/shared/constants";
+import { formatPrice } from "@/shared/utils";
 
-export function ReservationForm({ carId }: { carId: string }) {
+export function ReservationForm({
+  carId,
+  defaultDriverAge = DEFAULT_DRIVER_AGE,
+}: {
+  carId: string;
+  defaultDriverAge?: number;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [driverAge, setDriverAge] = useState(() => normaliseDriverAge(defaultDriverAge));
+
+  const showYoungDriverFee = Number(driverAge) < YOUNG_DRIVER_AGE;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,6 +66,22 @@ export function ReservationForm({ carId }: { carId: string }) {
       </div>
       <Input name="email" type="email" placeholder="Email" required />
       <Input name="phone" type="tel" placeholder="Phone" required />
+
+      <div className="text-sm text-gray-600">
+        <span className="block">Driver age</span>
+        <DriverAgeSelect
+          name="driverAge"
+          value={driverAge}
+          onChange={setDriverAge}
+          className="mt-1 h-10 w-full rounded-md px-3"
+        />
+        {showYoungDriverFee && (
+          <span className="mt-1 block text-xs text-gray-500">
+            Drivers under {YOUNG_DRIVER_AGE} pay a {formatPrice(YOUNG_DRIVER_FEE_PER_DAY)}/day
+            young-driver surcharge, included in your total.
+          </span>
+        )}
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm text-gray-600">
           Pickup date
