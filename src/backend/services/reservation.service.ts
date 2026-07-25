@@ -16,6 +16,7 @@ export async function createReservation(rawInput: unknown) {
     pickupAt: input.pickupDate,
     returnAt: input.returnDate,
     driverAge: input.driverAge,
+    promoCode: input.promoCode,
   });
 
   if (quote.days > MAX_RENTAL_DAYS) {

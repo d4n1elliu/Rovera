@@ -8,6 +8,8 @@ import {
   DriverAgeSelect,
   normaliseDriverAge,
 } from "@/frontend/components/features/booking/driver-age-select";
+import { PromoCodeField } from "@/frontend/components/features/booking/promo-code-field";
+import { findPromotion, normalisePromoCode, promotionLabel } from "@/shared/config/promotions";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
 import {
   DEFAULT_DRIVER_AGE,
@@ -19,14 +21,19 @@ import { formatPrice } from "@/shared/utils";
 export function ReservationForm({
   carId,
   defaultDriverAge = DEFAULT_DRIVER_AGE,
+  defaultPromoCode = "",
 }: {
   carId: string;
   defaultDriverAge?: number;
+  defaultPromoCode?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [driverAge, setDriverAge] = useState(() => normaliseDriverAge(defaultDriverAge));
+  const [promoCode, setPromoCode] = useState(() => normalisePromoCode(defaultPromoCode));
+
+  const promoIsInvalid = promoCode.trim() !== "" && !findPromotion(promoCode);
 
   const showYoungDriverFee = Number(driverAge) < YOUNG_DRIVER_AGE;
 
@@ -80,6 +87,27 @@ export function ReservationForm({
             Drivers under {YOUNG_DRIVER_AGE} pay a {formatPrice(YOUNG_DRIVER_FEE_PER_DAY)}/day
             young-driver surcharge, included in your total.
           </span>
+        )}
+      </div>
+
+      <div className="text-sm text-gray-600">
+        <span className="block">Promo code (optional)</span>
+        <PromoCodeField
+          name="promoCode"
+          value={promoCode}
+          onChange={setPromoCode}
+          invalid={promoIsInvalid}
+          applied={Boolean(findPromotion(promoCode))}
+          className="mt-1 w-full rounded-md"
+        />
+        {promoIsInvalid ? (
+          <span className="mt-1 block text-xs text-red-600">That promo code isn’t valid.</span>
+        ) : (
+          findPromotion(promoCode) && (
+            <span className="mt-1 block text-xs text-emerald-700">
+              {promotionLabel(findPromotion(promoCode)!)}, applied to your total.
+            </span>
+          )
         )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
