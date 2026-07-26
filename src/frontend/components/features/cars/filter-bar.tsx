@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { BODY_TYPES, FUEL_TYPES } from "@/shared/constants";
 import {
+  FLEET_SECTION_ID,
   priceFilterOptions as PRICE_OPTIONS,
   sortOptions as SORT_OPTIONS,
 } from "@/frontend/config/landing";
@@ -25,8 +26,16 @@ export function FilterBar() {
     } else {
       params.delete(key);
     }
+
+    // Changing a filter changes how many results there are, so the current
+    // page number may no longer exist. Always return to the first page.
+    params.delete("page");
+
     const query = params.toString();
-    router.replace(query ? `/?${query}` : "/", { scroll: false });
+    router.replace(
+      query ? `/?${query}#${FLEET_SECTION_ID}` : `/#${FLEET_SECTION_ID}`,
+      { scroll: false }
+    );
   }
 
   const hasFilters = ["bodyType", "fuelType", "maxPrice", "sort"].some((key) =>
@@ -92,7 +101,7 @@ export function FilterBar() {
       {hasFilters && (
         <button
           type="button"
-          onClick={() => router.replace("/", { scroll: false })}
+          onClick={() => router.replace(`/#${FLEET_SECTION_ID}`, { scroll: false })}
           className="h-10 rounded-md px-3 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
         >
           Clear filters

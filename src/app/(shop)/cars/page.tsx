@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { searchAvailableCars } from "@/backend/services/car.service";
 import { CarGrid } from "@/frontend/components/features/cars/car-grid";
+import { PaginationNav } from "@/frontend/components/features/cars/pagination-nav";
 import { SearchBar } from "@/frontend/components/features/cars/search-bar";
 import { SearchEmptyState } from "@/frontend/components/features/cars/search-empty-state";
 import { SearchSummary } from "@/frontend/components/features/cars/search-summary";
+import { SortSelect } from "@/frontend/components/features/cars/sort-select";
 import { carSearchQuery, parseCarSearch } from "@/shared/schemas/car-search.schema";
+import { carListingSchema } from "@/shared/schemas/car.schema";
 import { toDateInput } from "@/shared/lib/datetime";
 import type { Quote } from "@/shared/lib/pricing";
 
@@ -20,7 +23,10 @@ export default async function CarsPage({
   searchParams: Record<string, string | undefined>;
 }) {
   const search = parseCarSearch(searchParams);
-  const results = await searchAvailableCars(search);
+  // Ordering and paging are read separately from the search itself: they
+  // change how results are shown, not which cars match.
+  const listing = carListingSchema.parse(searchParams);
+  const results = await searchAvailableCars(search, listing);
 
   // Rebuilt from the parsed search rather than the raw URL, so a parameter we
   // rejected is not passed on to the reservation form.
@@ -30,6 +36,13 @@ export default async function CarsPage({
     driverAge: String(search.driverAge),
     promo: search.promoCode ?? undefined,
   });
+
+  // Everything except the page number, so a page link keeps the whole search.
+  const pageQuery = new URLSearchParams(
+    Object.entries(searchParams).filter(
+      ([key, value]) => value && key !== "page"
+    ) as [string, string][]
+  ).toString();
 
   const quotes: Record<string, Quote> = {};
   for (const result of results.results) {
@@ -46,11 +59,21 @@ export default async function CarsPage({
       {results.results.length === 0 ? (
         <SearchEmptyState results={results} />
       ) : (
-        <CarGrid
-          cars={results.results.map((result) => result.car)}
-          quotes={quotes}
-          searchQuery={searchQuery}
-        />
+        <>
+          <div className="flex justify-end">
+            <SortSelect />
+          </div>
+          <CarGrid
+            cars={results.results.map((result) => result.car)}
+            quotes={quotes}
+            searchQuery={searchQuery}
+          />
+          <PaginationNav
+            pagination={results.pagination}
+            baseQuery={pageQuery}
+            basePath="/cars"
+          />
+        </>
       )}
     </div>
   );

@@ -145,8 +145,12 @@ export const reservationRepository = {
 
   /** Ids of every car held by a live reservation overlapping the window.
    *  One query for the whole fleet, so a search does not cost a round trip
-   *  per car the way hasOverlap would. */
-  async findBookedCarIds(pickupAt: Date, returnAt: Date) {
+   *  per car the way hasOverlap would.
+   *
+   *  Returned as ObjectIds because the fleet query excludes them directly
+   *  ($nin), which keeps availability inside the paged query rather than
+   *  filtering a page after the fact — otherwise pages would come back short. */
+  async findBookedCarIds(pickupAt: Date, returnAt: Date): Promise<ObjectId[]> {
     const reservations = await reservationsCollection();
 
     const held = await reservations
@@ -154,6 +158,8 @@ export const reservationRepository = {
       .project<{ carId: ObjectId }>({ carId: 1 })
       .toArray();
 
-    return new Set(held.map((reservation) => reservation.carId.toHexString()));
+    // A car can be held by more than one reservation in the window.
+    const unique = new Map(held.map((r) => [r.carId.toHexString(), r.carId]));
+    return Array.from(unique.values());
   },
 };

@@ -15,35 +15,27 @@ import {
   stats,
   testimonialsContent,
 } from "@/frontend/config/landing";
-import { carRating } from "@/frontend/lib/rating";
-import type { Car } from "@/shared/types";
+import { PaginationNav } from "@/frontend/components/features/cars/pagination-nav";
 
 // Rendered per-request: the listing reads live availability from the DB.
 export const dynamic = "force-dynamic";
 
-interface HomeSearchParams {
-  bodyType?: string;
-  fuelType?: string;
-  maxPrice?: string;
-  sort?: string;
-}
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | undefined>;
+}) {
+  // Ordering and paging are applied by the database, not to an already-fetched
+  // array: sorting in memory can only order the rows this page happens to
+  // hold, which is wrong as soon as the fleet spans more than one page.
+  const { cars, pagination } = await getCars(searchParams);
 
-function sortCars(cars: Car[], sort?: string) {
-  switch (sort) {
-    case "price-asc":
-      return [...cars].sort((a, b) => a.pricePerDay - b.pricePerDay);
-    case "price-desc":
-      return [...cars].sort((a, b) => b.pricePerDay - a.pricePerDay);
-    case "rating":
-      return [...cars].sort((a, b) => carRating(b.id).rating - carRating(a.id).rating);
-    default:
-      return cars;
-  }
-}
-
-export default async function HomePage({ searchParams }: { searchParams: HomeSearchParams }) {
-  const { sort, ...filters } = searchParams;
-  const cars = sortCars((await getCars(filters)) as unknown as Car[], sort);
+  // Everything except the page number, so a page link keeps the filters.
+  const fleetQuery = new URLSearchParams(
+    Object.entries(searchParams).filter(
+      ([key, value]) => value && key !== "page"
+    ) as [string, string][]
+  ).toString();
 
   return (
     <div>
@@ -122,6 +114,12 @@ export default async function HomePage({ searchParams }: { searchParams: HomeSea
         </div>
         <div className="mt-8">
           <CarGrid cars={cars} />
+          <PaginationNav
+            pagination={pagination}
+            baseQuery={fleetQuery}
+            basePath="/"
+            hash={FLEET_SECTION_ID}
+          />
         </div>
       </section>
 

@@ -22,6 +22,24 @@ export type Location = (typeof LOCATIONS)[number];
 
 export const MAX_RENTAL_DAYS = 30;
 
+/* ----------------------- Fleet listing ------------------------------- */
+
+/** Sort orders offered on the fleet list. Values are URL parameters, so they
+ *  are kebab-case rather than camelCase. */
+export const CAR_SORTS = ["recommended", "price-asc", "price-desc", "rating"] as const;
+
+export type CarSort = (typeof CAR_SORTS)[number];
+
+export const DEFAULT_CAR_SORT: CarSort = "recommended";
+
+/** Cars per page. The grid is up to 5 columns wide, so 20 fills whole rows at
+ *  every breakpoint. */
+export const DEFAULT_PAGE_SIZE = 20;
+
+/** Ceiling on a caller-supplied page size, so a hand-edited URL cannot ask
+ *  for the whole fleet in one query. */
+export const MAX_PAGE_SIZE = 60;
+
 /** The reservation lifecycle. Stored on the document and enforced by the
  *  collection validator, so these names are the database's vocabulary too. */
 export const RESERVATION_STATUSES = [

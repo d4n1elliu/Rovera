@@ -24,8 +24,12 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.cars]: [
     { key: { slug: 1 }, unique: true, name: "slug_unique" },
     { key: { vin: 1 }, unique: true, sparse: true, name: "vin_unique" },
-    // The fleet grid's default query: available cars, cheapest first.
+    // The fleet grid's price sorts: available cars, cheapest (or dearest) first.
     { key: { available: 1, pricePerDay: 1 }, name: "available_price" },
+    /* The "Recommended" and "Top rated" sorts. Leading with `available`
+     * matches the equality filter every listing query applies, so the index
+     * serves both the filter and the sort in one pass. */
+    { key: { available: 1, ratingAvg: -1, reviewCount: -1 }, name: "available_rating" },
     { key: { locationId: 1, available: 1 }, name: "location_available" },
     { key: { bodyType: 1, fuelType: 1 }, name: "bodyType_fuelType" },
   ],
