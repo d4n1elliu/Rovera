@@ -1,107 +1,66 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { BODY_TYPES, FUEL_TYPES } from "@/shared/constants";
+import { FilterSelect } from "@/frontend/components/ui/filter-select";
+import { SortSelect } from "@/frontend/components/features/cars/sort-select";
+import { useListingParams } from "@/frontend/hooks/use-listing-params";
 import {
   FLEET_SECTION_ID,
   priceFilterOptions as PRICE_OPTIONS,
-  sortOptions as SORT_OPTIONS,
 } from "@/frontend/config/landing";
-
-const selectClass =
-  "h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-light/40";
 
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+/** Options for an enum filter, with an "all" choice that clears it. */
+function enumOptions(values: readonly string[], allLabel: string) {
+  return [
+    { value: "", label: allLabel },
+    ...values.map((value) => ({ value, label: capitalize(value) })),
+  ];
+}
+
+const BODY_OPTIONS = enumOptions(BODY_TYPES, "All body types");
+const FUEL_OPTIONS = enumOptions(FUEL_TYPES, "All fuel types");
+
 export function FilterBar() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // Returning to the fleet section keeps the grid in view when a filter
+  // re-renders the page from the server.
+  const { get, setParam, clear } = useListingParams({ hash: FLEET_SECTION_ID });
 
-  function setParam(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-
-    // Changing a filter changes how many results there are, so the current
-    // page number may no longer exist. Always return to the first page.
-    params.delete("page");
-
-    const query = params.toString();
-    router.replace(
-      query ? `/?${query}#${FLEET_SECTION_ID}` : `/#${FLEET_SECTION_ID}`,
-      { scroll: false }
-    );
-  }
-
-  const hasFilters = ["bodyType", "fuelType", "maxPrice", "sort"].some((key) =>
-    searchParams.get(key)
-  );
+  const hasFilters = ["bodyType", "fuelType", "maxPrice", "sort"].some((key) => get(key));
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <select
-        aria-label="Body type"
-        value={searchParams.get("bodyType") ?? ""}
-        onChange={(e) => setParam("bodyType", e.target.value)}
-        className={selectClass}
-      >
-        <option value="">All body types</option>
-        {BODY_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {capitalize(type)}
-          </option>
-        ))}
-      </select>
+      <FilterSelect
+        label="Body type"
+        value={get("bodyType")}
+        onChange={(value) => setParam("bodyType", value)}
+        options={BODY_OPTIONS}
+      />
 
-      <select
-        aria-label="Fuel type"
-        value={searchParams.get("fuelType") ?? ""}
-        onChange={(e) => setParam("fuelType", e.target.value)}
-        className={selectClass}
-      >
-        <option value="">All fuel types</option>
-        {FUEL_TYPES.map((type) => (
-          <option key={type} value={type}>
-            {capitalize(type)}
-          </option>
-        ))}
-      </select>
+      <FilterSelect
+        label="Fuel type"
+        value={get("fuelType")}
+        onChange={(value) => setParam("fuelType", value)}
+        options={FUEL_OPTIONS}
+      />
 
-      <select
-        aria-label="Maximum price per day"
-        value={searchParams.get("maxPrice") ?? ""}
-        onChange={(e) => setParam("maxPrice", e.target.value)}
-        className={selectClass}
-      >
-        {PRICE_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <FilterSelect
+        label="Maximum price per day"
+        value={get("maxPrice")}
+        onChange={(value) => setParam("maxPrice", value)}
+        options={PRICE_OPTIONS}
+      />
 
-      <select
-        aria-label="Sort results"
-        value={searchParams.get("sort") ?? ""}
-        onChange={(e) => setParam("sort", e.target.value)}
-        className={selectClass}
-      >
-        {SORT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      {/* The same control the results page uses, rather than a second copy. */}
+      <SortSelect hash={FLEET_SECTION_ID} labelled={false} />
 
       {hasFilters && (
         <button
           type="button"
-          onClick={() => router.replace(`/#${FLEET_SECTION_ID}`, { scroll: false })}
+          onClick={clear}
           className="h-10 rounded-md px-3 text-sm font-medium text-brand transition-colors hover:bg-brand/5"
         >
           Clear filters

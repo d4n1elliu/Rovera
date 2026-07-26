@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Pagination } from "@/backend/services/car.service";
+import { PAGE_PARAM } from "@/shared/lib/query";
 
 /** Page numbers to render, with `null` standing in for a gap. Always shows
  *  the first and last page plus a window around the current one, so the
@@ -48,8 +49,9 @@ export function PaginationNav({
 
   function href(target: number) {
     const params = new URLSearchParams(baseQuery);
-    if (target > 1) params.set("page", String(target));
-    else params.delete("page");
+    // Page 1 is the canonical URL, so it carries no page parameter.
+    if (target > 1) params.set(PAGE_PARAM, String(target));
+    else params.delete(PAGE_PARAM);
 
     const query = params.toString();
     // Order matters: the fragment goes last, after any query string.

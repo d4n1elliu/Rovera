@@ -8,6 +8,7 @@ import { SearchSummary } from "@/frontend/components/features/cars/search-summar
 import { SortSelect } from "@/frontend/components/features/cars/sort-select";
 import { carSearchQuery, parseCarSearch } from "@/shared/schemas/car-search.schema";
 import { carListingSchema } from "@/shared/schemas/car.schema";
+import { PAGE_PARAM, queryWithout } from "@/shared/lib/query";
 import { toDateInput } from "@/shared/lib/datetime";
 import type { Quote } from "@/shared/lib/pricing";
 
@@ -38,11 +39,7 @@ export default async function CarsPage({
   });
 
   // Everything except the page number, so a page link keeps the whole search.
-  const pageQuery = new URLSearchParams(
-    Object.entries(searchParams).filter(
-      ([key, value]) => value && key !== "page"
-    ) as [string, string][]
-  ).toString();
+  const pageQuery = queryWithout(searchParams, PAGE_PARAM);
 
   const quotes: Record<string, Quote> = {};
   for (const result of results.results) {

@@ -16,6 +16,7 @@ import {
   testimonialsContent,
 } from "@/frontend/config/landing";
 import { PaginationNav } from "@/frontend/components/features/cars/pagination-nav";
+import { PAGE_PARAM, queryWithout } from "@/shared/lib/query";
 
 // Rendered per-request: the listing reads live availability from the DB.
 export const dynamic = "force-dynamic";
@@ -31,11 +32,7 @@ export default async function HomePage({
   const { cars, pagination } = await getCars(searchParams);
 
   // Everything except the page number, so a page link keeps the filters.
-  const fleetQuery = new URLSearchParams(
-    Object.entries(searchParams).filter(
-      ([key, value]) => value && key !== "page"
-    ) as [string, string][]
-  ).toString();
+  const fleetQuery = queryWithout(searchParams, PAGE_PARAM);
 
   return (
     <div>
