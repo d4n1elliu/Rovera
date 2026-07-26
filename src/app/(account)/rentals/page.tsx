@@ -29,7 +29,7 @@ export default async function RentalsPage() {
                     {rental.car.make} {rental.car.model}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {formatDate(rental.pickupDate)} → {formatDate(rental.returnDate)}
+                    {formatDate(rental.pickupAt)} → {formatDate(rental.returnAt)}
                   </p>
                 </div>
                 <div className="text-right">

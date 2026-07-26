@@ -3,19 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && next build",
-  "start": "next start",
-  "lint": "next lint",
-  "postinstall": "prisma generate"
-  },
-  "prisma": {
-    "schema": "src/backend/prisma/schema.prisma",
-    "seed": "tsx src/backend/prisma/seed.ts"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:indexes": "node scripts/with-env.mjs tsx src/backend/db/ensure-indexes.ts",
+    "db:seed": "node scripts/with-env.mjs tsx src/backend/db/seed.ts",
+    "db:reset": "node scripts/with-env.mjs tsx src/backend/db/seed.ts --reset"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0",
     "clsx": "^2.1.1",
+    "mongodb": "^6.8.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -32,7 +31,6 @@
     "eslint-config-next": "^14.2.5",
     "postcss": "^8.4.39",
     "prettier": "^3.3.3",
-    "prisma": "^5.17.0",
     "tailwindcss": "^3.4.6",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3"
