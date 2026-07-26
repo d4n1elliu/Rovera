@@ -1,7 +1,21 @@
-import type { BodyType, FuelType, Transmission } from "@/shared/constants";
+import type {
+  BodyType,
+  FuelType,
+  ReservationStatus,
+  Transmission,
+  UserRole,
+} from "@/shared/constants";
+
+/* ---------------------------------------------------------------------
+ * The shapes the frontend sees. Documents are serialised on the way out of
+ * the backend (see backend/lib/serialize.ts): ObjectIds become hex strings
+ * and Dates become ISO strings, so everything here is JSON-safe and can
+ * cross a server-component boundary or an API response unchanged.
+ * ------------------------------------------------------------------- */
 
 export interface Car {
   id: string;
+  slug: string;
   make: string;
   model: string;
   year: number;
@@ -11,29 +25,66 @@ export interface Car {
   seats: number;
   pricePerDay: number;
   imageUrl: string;
-  mileage?: string | null;
-  description?: string | null;
-  vin?: string | null;
+  mileage: string | null;
+  description: string | null;
+  vin: string | null;
   available: boolean;
+  locationId: string;
+  /** Denormalised review aggregates, recomputed when a review lands. */
+  ratingAvg: number;
+  reviewCount: number;
+  tripCount: number;
 }
 
-export interface Customer {
+export interface User {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phone: string | null;
+  role: UserRole;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  slug: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  lat: number | null;
+  lng: number | null;
+  timezone: string;
+  active: boolean;
 }
 
 export interface Reservation {
   id: string;
+  reference: string;
   carId: string;
-  customerId: string;
-  pickupDate: string; // ISO date
-  returnDate: string; // ISO date
+  userId: string;
+  pickupLocationId: string;
+  dropoffLocationId: string;
+  /** ISO instants — rentals are scheduled by the hour, not the day. */
+  pickupAt: string;
+  returnAt: string;
+  driverAge: number;
+  /* The stored price breakdown, so a total can always be explained. */
+  days: number;
+  baseTotal: number;
+  youngDriverFee: number;
+  discount: number;
   totalPrice: number;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
+  currency: string;
+  promoCodeId: string | null;
+  status: ReservationStatus;
+  cancelledAt: string | null;
   createdAt: string;
+}
+
+export interface ReservationWithCar extends Reservation {
+  car: Car;
 }
 
 export interface CarFilters {

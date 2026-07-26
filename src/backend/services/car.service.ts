@@ -1,6 +1,7 @@
 import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
+import { toCar } from "@/backend/lib/serialize";
 import { carFiltersSchema, type CarFiltersInput } from "@/shared/schemas/car.schema";
 import type { CarSearch } from "@/shared/schemas/car-search.schema";
 import { quoteRental, type Quote } from "@/shared/lib/pricing";
@@ -8,18 +9,20 @@ import type { Car } from "@/shared/types";
 
 export async function getCars(rawFilters: unknown = {}) {
   const filters: CarFiltersInput = carFiltersSchema.parse(rawFilters);
-  return carRepository.findMany(filters);
+  const cars = await carRepository.findMany(filters);
+  return cars.map(toCar);
 }
 
 export async function getCarById(id: string) {
   const car = await carRepository.findById(id);
   if (!car) throw new Error(`Car not found: ${id}`);
-  return car;
+  return toCar(car);
 }
 
 export async function searchCars(query: string) {
   if (!query.trim()) return [];
-  return carRepository.findMany({ query });
+  const cars = await carRepository.findMany({ query });
+  return cars.map(toCar);
 }
 
 export interface CarSearchResult {
@@ -46,7 +49,7 @@ export interface CarSearchResults {
  *  and promo code they searched with. Availability is resolved in a single
  *  query against overlapping reservations. */
 export async function searchAvailableCars(search: CarSearch): Promise<CarSearchResults> {
-  const cars = (await carRepository.findMany(search.filters)) as unknown as Car[];
+  const cars = (await carRepository.findMany(search.filters)).map(toCar);
   const { pickupAt, returnAt } = search;
 
   if (!pickupAt || !returnAt) {

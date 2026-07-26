@@ -22,9 +22,46 @@ export type Location = (typeof LOCATIONS)[number];
 
 export const MAX_RENTAL_DAYS = 30;
 
+/** The reservation lifecycle. Stored on the document and enforced by the
+ *  collection validator, so these names are the database's vocabulary too. */
+export const RESERVATION_STATUSES = [
+  "pending",
+  "confirmed",
+  "active",
+  "completed",
+  "cancelled",
+] as const;
+
+export type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
+
 /** Reservation statuses that still hold a car. A cancelled or completed
  *  booking releases it, so only these block a new rental. */
 export const BLOCKING_RESERVATION_STATUSES = ["pending", "confirmed"] as const;
+
+export const USER_ROLES = ["customer", "admin"] as const;
+export type UserRole = (typeof USER_ROLES)[number];
+
+/** A rental charge or the refundable security hold taken alongside it. */
+export const PAYMENT_KINDS = ["rental", "deposit"] as const;
+export type PaymentKind = (typeof PAYMENT_KINDS)[number];
+
+export const PAYMENT_STATUSES = [
+  "requires_payment",
+  "processing",
+  "succeeded",
+  "failed",
+  "refunded",
+  "cancelled",
+] as const;
+
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** Every price in the system is quoted and charged in this currency. */
+export const DEFAULT_CURRENCY = "AUD";
+
+/** Bounds for a review's star rating. */
+export const MIN_REVIEW_RATING = 1;
+export const MAX_REVIEW_RATING = 5;
 
 /** Shortest bookable rental. Rentals are scheduled by the hour, so this is
  *  expressed in hours rather than days. */
