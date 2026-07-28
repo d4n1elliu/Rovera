@@ -71,8 +71,8 @@ rules, and repositories own every query.
 `src/backend/db/schema.ts` is the single source of truth. Each collection is
 described three ways, meant to be read together:
 
-1. a `*Doc` interface — the shape MongoDB stores, ObjectIds and Dates included;
-2. a `$jsonSchema` validator — the same rules enforced by the database, so a
+1. A `*Doc` interface — the shape MongoDB stores, ObjectIds and Dates included;
+2. A `$jsonSchema` validator — the same rules enforced by the database, so a
    stray script cannot write a malformed document;
 3. index definitions in `indexes.ts`, including the unique constraints the
    model depends on.
@@ -96,5 +96,5 @@ ObjectIds become hex strings and Dates become ISO strings, so everything in
 | `npm run db:seed` | Seed reference data and demo bookings (idempotent) |
 | `npm run db:reset` | Drop every collection, then seed from scratch |
 
-# Link
+## Link
 https://rovera1.vercel.app/
