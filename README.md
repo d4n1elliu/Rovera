@@ -1,24 +1,37 @@
 # Rovera
 
-Full-stack car rental platform built with Next.js, TypeScript, MongoDB and Tailwind CSS.
+Full-stack car rental platform built with Next.js, TypeScript, PostgreSQL (Supabase) and Tailwind CSS with Drizzle ORM as the data layer.
 
 ## Getting started
 
 ```bash
-npm install
-# set DATABASE_URL in .env.local
-npm run db:indexes           # create collections, validators and indexes
+npm install                  # set DATABASE_URL in .env.local  (your Supabase Postgres connection string)
+npm run db:migrate           # apply migrations — create tables, enums, constraints and indexes
 npm run db:seed              # seed locations, cars, promo codes and demo bookings
 npm run dev                  # http://localhost:3000
 ```
 
-MongoDB must be a **replica set**, even locally — transactions (the booking
-double-booking guard) do not work against a standalone `mongod`:
+### Database
 
-```bash
-brew services start mongodb-community
-mongosh --eval 'rs.initiate()'
+The database is PostgreSQL, hosted on **Supabase**. Grab your `DATABASE_URL`
+from the Supabase dashboard under **Connect → ORMs (Drizzle)** and put it in
+`.env.local`.
+
+Unlike the previous MongoDB setup, no special local configuration is needed:
+Postgres has native transactions, so the booking double booking guard works out
+of the box, which means there is no replica set to initialise.
+
+If you access the tables only through the app (Drizzle, server-side), enable
+Row Level Security on every table so Supabase's public Data API can't be used to
+read or write them directly with the anon key:
+
+```sql
+alter table cars enable row level security;
+-- ...repeat for locations, reservations, users, payments, reviews, promo_codes
 ```
+
+Drizzle connects as the `postgres` role and bypasses RLS, so the app keeps
+working with RLS on and no policies.
 
 ### Environment files
 
@@ -42,11 +55,12 @@ src/
 │
 ├── backend/            Everything server-side (never shipped to the browser)
 │   ├── services/       Business logic / use-cases (createReservation, getCars, …)
-│   ├── repositories/   Data access — all MongoDB queries live here
-│   ├── db/             client.ts (MongoClient singleton), schema.ts (document
-│   │                   types + $jsonSchema validators), indexes.ts, seed.ts
+│   ├── repositories/   Data access — all Drizzle queries live here
+│   ├── db/             client.ts (Drizzle + postgres.js client), schema.ts (table
+│   │                   definitions, enums, constraints, indexes), seed.ts,
+│   │                   aggregates.ts (denormalised review aggregates)
 │   ├── lib/            Server-only helpers (booking references, serialisation)
-│   └── data/           Seed fixtures
+│   └── data/           Seed fixtures (cars.json)
 │
 ├── shared/             Code used by BOTH sides
 │   ├── schemas/        Zod validation (client forms + API handlers)
@@ -56,33 +70,33 @@ src/
 │
 └── middleware.ts       Route protection (account/rentals) once auth is added
 
+drizzle/                Generated SQL migrations + snapshots (drizzle-kit output)
 public/                 Static assets (logo, car images)
 ```
 
-Request flow: **page/route handler → backend service → repository → MongoDB**.
-Pages never query MongoDB directly; services own validation (Zod) and business
-rules, and repositories own every query.
+Request flow: **page/route handler → backend service → repository → Postgres (via Drizzle)**.
+Pages never query the database directly; services own validation (Zod) and
+business rules, and repositories own every query.
 
 `frontend/` code must never import from `backend/` — the only bridge is `app/`
-(server components and API routes), and `shared/` is safe to import anywhere.
+(server components and API routes) and `shared/` is safe to import anywhere.
 
 ### The data model
 
-`src/backend/db/schema.ts` is the single source of truth. Each collection is
-described three ways, meant to be read together:
+`src/backend/db/schema.ts` defines every table in one place.
+Running `npm run db:generate` turns any change to that file
+into a numbered SQL migration in `drizzle/` and `npm run db:migrate` applies it.
 
-1. A `*Doc` interface — the shape MongoDB stores, ObjectIds and Dates included;
-2. A `$jsonSchema` validator — the same rules enforced by the database, so a
-   stray script cannot write a malformed document;
-3. index definitions in `indexes.ts`, including the unique constraints the
-   model depends on.
+The database enforces its own rules, so bad data simply can't get in:
 
-Enum values come from `shared/constants.ts` rather than being redeclared, so
-the database, the Zod schemas and the UI cannot drift apart.
+- **Types & required fields**: a missing or wrong-typed value is rejected.
+- **Foreign keys**: a booking must point to a real car and user, and you can't delete a car that still has bookings.
+- **Enums & checks**: only valid values are allowed (body types, statuses, non-negative prices and so on).
 
-Documents are serialised at the backend boundary (`backend/lib/serialize.ts`):
-ObjectIds become hex strings and Dates become ISO strings, so everything in
-`shared/types` is JSON-safe and can cross a server-component boundary.
+Enum values live in `shared/constants.ts`, so the database, the forms, and the
+UI always agree. Postgres columns are snake_case and TypeScript is camelCase and
+Drizzle maps between them automatically. Before data reaches the frontend it's
+serialised into JSON-safe shapes: prices as numbers, dates as ISO strings.
 
 ## Scripts
 
@@ -92,9 +106,11 @@ ObjectIds become hex strings and Dates become ISO strings, so everything in
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run db:indexes` | Create collections, apply validators, build indexes |
+| `npm run db:generate` | Diff `schema.ts` into a new SQL migration under `drizzle/` |
+| `npm run db:migrate` | Apply pending migrations — create tables, enums, constraints and indexes |
 | `npm run db:seed` | Seed reference data and demo bookings (idempotent) |
-| `npm run db:reset` | Drop every collection, then seed from scratch |
+| `npm run db:reset` | Truncate every table, then seed from scratch |
 
 ## Link
-https://rovera1.vercel.app/
+
+| https://rovera1.vercel.app/ |
