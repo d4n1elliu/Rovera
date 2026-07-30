@@ -7,10 +7,10 @@ import type {
 } from "@/shared/constants";
 
 /* ---------------------------------------------------------------------
- * The shapes the frontend sees. Documents are serialised on the way out of
- * the backend (see backend/lib/serialize.ts): ObjectIds become hex strings
- * and Dates become ISO strings, so everything here is JSON-safe and can
- * cross a server-component boundary or an API response unchanged.
+ * The shapes the frontend sees. Rows are serialised on the way out of the
+ * backend (see backend/lib/serialize.ts): Dates become ISO strings and
+ * primary keys are already UUID text, so everything here is JSON-safe and
+ * can cross a server-component boundary or an API response unchanged.
  * ------------------------------------------------------------------- */
 
 export interface Car {

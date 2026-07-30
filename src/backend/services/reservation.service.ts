@@ -20,14 +20,14 @@ export async function createReservation(rawInput: unknown) {
   });
 
   const overlaps = await reservationRepository.hasOverlap(
-    car._id,
+    car.id,
     input.pickupDate,
     input.returnDate
   );
   if (overlaps) throw new Error("Car is already booked for those dates");
 
   const reservation = await reservationRepository.create({
-    carId: car._id,
+    carId: car.id,
     user: {
       firstName: input.firstName,
       lastName: input.lastName,

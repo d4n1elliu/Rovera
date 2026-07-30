@@ -40,8 +40,8 @@ export const DEFAULT_PAGE_SIZE = 20;
  *  for the whole fleet in one query. */
 export const MAX_PAGE_SIZE = 60;
 
-/** The reservation lifecycle. Stored on the document and enforced by the
- *  collection validator, so these names are the database's vocabulary too. */
+/** The reservation lifecycle. These values back the `reservation_status`
+ *  Postgres enum, so they are the database's vocabulary too. */
 export const RESERVATION_STATUSES = [
   "pending",
   "confirmed",

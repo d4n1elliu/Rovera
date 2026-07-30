@@ -1,65 +1,75 @@
-import type { CarDoc, ReservationDoc } from "@/backend/db/schema";
+import type { CarRow, ReservationRow } from "@/backend/db/schema";
 import type { Car, Reservation, ReservationWithCar } from "@/shared/types";
 
 /* ---------------------------------------------------------------------
- * Documents cross into the frontend as plain JSON: ObjectIds become strings
- * and Dates become ISO strings. Server components serialise their props on
- * the way to the browser anyway, so doing it here keeps the shape the UI
- * sees identical whether it came from a server component or an API route.
+ * Rows cross into the frontend as plain JSON: Dates become ISO strings.
+ * Server components serialise their props on the way to the browser anyway,
+ * so doing it here keeps the shape the UI sees identical whether it came
+ * from a server component or an API route.
+ *
+ * Primary keys need no conversion — they are UUID text on both sides. Prices
+ * are already numbers by the time they arrive: the `money` type in
+ * db/schema.ts converts Postgres' exact numeric to a JS number on the way
+ * out.
+ *
+ * The row types are structurally wider than the JSON ones (they carry
+ * createdAt/updatedAt and internal columns), so fields are copied explicitly
+ * rather than spread — that way adding a column to the schema cannot
+ * accidentally publish it through the API.
  * ------------------------------------------------------------------- */
 
-export function toCar(doc: CarDoc): Car {
+export function toCar(row: CarRow): Car {
   return {
-    id: doc._id.toHexString(),
-    slug: doc.slug,
-    make: doc.make,
-    model: doc.model,
-    year: doc.year,
-    bodyType: doc.bodyType,
-    fuelType: doc.fuelType,
-    transmission: doc.transmission,
-    seats: doc.seats,
-    pricePerDay: doc.pricePerDay,
-    imageUrl: doc.imageUrl,
-    mileage: doc.mileage,
-    description: doc.description,
-    vin: doc.vin,
-    available: doc.available,
-    locationId: doc.locationId.toHexString(),
-    ratingAvg: doc.ratingAvg,
-    reviewCount: doc.reviewCount,
-    tripCount: doc.tripCount,
+    id: row.id,
+    slug: row.slug,
+    make: row.make,
+    model: row.model,
+    year: row.year,
+    bodyType: row.bodyType,
+    fuelType: row.fuelType,
+    transmission: row.transmission,
+    seats: row.seats,
+    pricePerDay: row.pricePerDay,
+    imageUrl: row.imageUrl,
+    mileage: row.mileage,
+    description: row.description,
+    vin: row.vin,
+    available: row.available,
+    locationId: row.locationId,
+    ratingAvg: row.ratingAvg,
+    reviewCount: row.reviewCount,
+    tripCount: row.tripCount,
   };
 }
 
-export function toReservation(doc: ReservationDoc): Reservation {
+export function toReservation(row: ReservationRow): Reservation {
   return {
-    id: doc._id.toHexString(),
-    reference: doc.reference,
-    carId: doc.carId.toHexString(),
-    userId: doc.userId.toHexString(),
-    pickupLocationId: doc.pickupLocationId.toHexString(),
-    dropoffLocationId: doc.dropoffLocationId.toHexString(),
-    pickupAt: doc.pickupAt.toISOString(),
-    returnAt: doc.returnAt.toISOString(),
-    driverAge: doc.driverAge,
-    days: doc.days,
-    baseTotal: doc.baseTotal,
-    youngDriverFee: doc.youngDriverFee,
-    discount: doc.discount,
-    totalPrice: doc.totalPrice,
-    currency: doc.currency,
-    promoCodeId: doc.promoCodeId ? doc.promoCodeId.toHexString() : null,
-    status: doc.status,
-    cancelledAt: doc.cancelledAt ? doc.cancelledAt.toISOString() : null,
-    createdAt: doc.createdAt.toISOString(),
+    id: row.id,
+    reference: row.reference,
+    carId: row.carId,
+    userId: row.userId,
+    pickupLocationId: row.pickupLocationId,
+    dropoffLocationId: row.dropoffLocationId,
+    pickupAt: row.pickupAt.toISOString(),
+    returnAt: row.returnAt.toISOString(),
+    driverAge: row.driverAge,
+    days: row.days,
+    baseTotal: row.baseTotal,
+    youngDriverFee: row.youngDriverFee,
+    discount: row.discount,
+    totalPrice: row.totalPrice,
+    currency: row.currency,
+    promoCodeId: row.promoCodeId,
+    status: row.status,
+    cancelledAt: row.cancelledAt ? row.cancelledAt.toISOString() : null,
+    createdAt: row.createdAt.toISOString(),
   };
 }
 
 /** A reservation with its car joined in, as the rentals list renders it. */
 export function toReservationWithCar(
-  doc: ReservationDoc,
-  car: CarDoc
+  row: ReservationRow,
+  car: CarRow
 ): ReservationWithCar {
-  return { ...toReservation(doc), car: toCar(car) };
+  return { ...toReservation(row), car: toCar(car) };
 }

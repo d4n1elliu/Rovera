@@ -1,430 +1,457 @@
-import type { ObjectId } from "mongodb";
+import { relations, sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  customType,
+  index,
+  integer,
+  numeric,
+  pgEnum,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import {
   BODY_TYPES,
   FUEL_TYPES,
+  MAX_REVIEW_RATING,
+  MIN_REVIEW_RATING,
   PAYMENT_KINDS,
   PAYMENT_STATUSES,
   RESERVATION_STATUSES,
   TRANSMISSIONS,
   USER_ROLES,
-  type BodyType,
-  type FuelType,
-  type PaymentKind,
-  type PaymentStatus,
-  type ReservationStatus,
-  type Transmission,
-  type UserRole,
 } from "@/shared/constants";
 
 /* ---------------------------------------------------------------------
  * The data model, in one place.
  *
- * Three layers describe each collection, and they are meant to be read
- * together:
+ * This single file is the whole schema: table definitions, the constraints
+ * the model depends on, and the indexes that keep listing and availability
+ * queries off sequential scans. `drizzle-kit generate` diffs it into
+ * versioned SQL under drizzle/, so a schema change is reviewable as SQL and
+ * applied the same way in every environment.
  *
- *   1. A `*Doc` interface — the shape as MongoDB stores it, ObjectIds and
- *      Date objects included. Repositories are typed against these.
- *   2. A `$jsonSchema` validator — the same rules enforced by the database,
- *      so a stray script or a mongosh session cannot write a malformed
- *      document. Applied by `ensure-indexes.ts`.
- *   3. Index definitions, in `indexes.ts`, including the unique constraints
- *      the model depends on.
+ * Three things the database itself now enforces, rather than trusting the
+ * application to get them right:
  *
- * Enum values are imported from shared/constants.ts rather than redeclared,
- * so the database, the Zod schemas guarding the API, and the UI can never
- * drift apart.
+ *   1. Column types and NOT NULL — a missing field is a write error, not a
+ *      silently malformed row.
+ *   2. Foreign keys — a reservation cannot reference a car that does not
+ *      exist, and deleting a car that has bookings is refused.
+ *   3. CHECK constraints and enums — the value ranges and vocabularies the
+ *      pricing and booking logic assume.
+ *
+ * Taken together they mean an invalid row cannot be written by any route —
+ * the application, a migration, a maintenance script, or a hand-typed
+ * statement in the SQL editor.
+ *
+ * Enum values come from shared/constants.ts rather than being redeclared, so
+ * the database, the Zod schemas guarding the API, and the UI cannot drift
+ * apart.
+ *
+ * Column names are snake_case in Postgres and camelCase in TypeScript. That
+ * mapping is automatic via `casing: "snake_case"`, configured in BOTH
+ * db/client.ts and drizzle.config.ts — they must agree, or generated
+ * migrations will not match the queries the app runs.
  * ------------------------------------------------------------------- */
 
-export const COLLECTIONS = {
-  users: "users",
-  locations: "locations",
-  cars: "cars",
-  reservations: "reservations",
-  payments: "payments",
-  reviews: "reviews",
-  promoCodes: "promoCodes",
-} as const;
+/* ------------------------------- Types ------------------------------- */
 
-/* ------------------------------ Documents ---------------------------- */
+/**
+ * Money, stored as `numeric` so totals are exact.
+ *
+ * Postgres returns numeric as a string, precisely to avoid the precision loss
+ * that makes float unsuitable for money, and postgres.js passes that string
+ * through untouched. Converting here keeps every price a `number` in
+ * TypeScript — which is what shared/lib/pricing.ts and the UI already
+ * expect — while the stored value stays exact.
+ */
+const money = customType<{ data: number; driverData: string }>({
+  dataType: () => "numeric(10, 2)",
+  fromDriver: (value) => Number(value),
+  toDriver: (value) => value.toString(),
+});
+
+/** A 0.0–5.0 star average. Same string/number treatment as `money`. */
+const rating = customType<{ data: number; driverData: string }>({
+  dataType: () => "numeric(2, 1)",
+  fromDriver: (value) => Number(value),
+  toDriver: (value) => value.toString(),
+});
+
+/** Carried by every table that is written to more than once. */
+const timestamps = {
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+};
+
+/* ------------------------------- Enums ------------------------------- */
+
+/* Real Postgres enum types, so an invalid value is rejected by the database
+ * and pg_enum documents the vocabulary to anything else reading the schema. */
+
+export const bodyTypeEnum = pgEnum("body_type", BODY_TYPES);
+export const fuelTypeEnum = pgEnum("fuel_type", FUEL_TYPES);
+export const transmissionEnum = pgEnum("transmission", TRANSMISSIONS);
+export const userRoleEnum = pgEnum("user_role", USER_ROLES);
+export const reservationStatusEnum = pgEnum("reservation_status", RESERVATION_STATUSES);
+export const paymentKindEnum = pgEnum("payment_kind", PAYMENT_KINDS);
+export const paymentStatusEnum = pgEnum("payment_status", PAYMENT_STATUSES);
+
+/* ------------------------------- Tables ------------------------------ */
 
 /** Renters and staff. The auth fields are nullable so a guest can still book
  *  by email alone: the reservation flow upserts a user with no password, and
- *  signing up later fills the same record in rather than creating a second. */
-export interface UserDoc {
-  _id: ObjectId;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string | null;
-  passwordHash: string | null;
-  emailVerified: Date | null;
-  image: string | null;
-  role: UserRole;
-  createdAt: Date;
-  updatedAt: Date;
-}
+ *  signing up later fills the same row in rather than creating a second. */
+export const users = pgTable(
+  "users",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    firstName: text().notNull(),
+    lastName: text().notNull(),
+    /** Always stored lower case — see normalizeEmail in backend/lib/email.ts.
+     *  That makes a plain unique constraint case-insensitive in effect, and
+     *  lets ON CONFLICT infer it. */
+    email: text().notNull().unique(),
+    phone: text(),
+    passwordHash: text(),
+    emailVerified: timestamp({ withTimezone: true }),
+    image: text(),
+    role: userRoleEnum().notNull().default("customer"),
+    ...timestamps,
+  },
+  (table) => [
+    /* Normalisation is enforced here rather than trusted to the application,
+     * so "A@b.com" cannot be inserted alongside "a@b.com" by a script that
+     * forgot to lower-case it. citext would express this at the type level,
+     * but the extension is not enabled by default on Supabase. */
+    check("users_email_lower_case", sql`${table.email} = lower(${table.email})`),
+    check("users_email_format", sql`${table.email} ~ '^.+@.+\\..+$'`),
+    check("users_first_name_not_blank", sql`length(trim(${table.firstName})) > 0`),
+    check("users_last_name_not_blank", sql`length(trim(${table.lastName})) > 0`),
+  ]
+);
 
 /** Branches a car can be picked up from or returned to. Replaces the
  *  hard-coded LOCATIONS array once the read path is wired up. */
-export interface LocationDoc {
-  _id: ObjectId;
-  name: string;
-  slug: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  lat: number | null;
-  lng: number | null;
-  timezone: string;
-  active: boolean;
-}
+export const locations = pgTable(
+  "locations",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    name: text().notNull().unique(),
+    slug: text().notNull().unique(),
+    address: text().notNull(),
+    city: text().notNull(),
+    state: text().notNull(),
+    country: text().notNull(),
+    lat: numeric({ precision: 9, scale: 6, mode: "number" }),
+    lng: numeric({ precision: 9, scale: 6, mode: "number" }),
+    timezone: text().notNull(),
+    active: boolean().notNull().default(true),
+  },
+  (table) => [index("locations_active").on(table.active)]
+);
 
-export interface CarDoc {
-  _id: ObjectId;
-  slug: string;
-  make: string;
-  model: string;
-  year: number;
-  bodyType: BodyType;
-  fuelType: FuelType;
-  transmission: Transmission;
-  seats: number;
-  pricePerDay: number;
-  imageUrl: string;
-  mileage: string | null;
-  description: string | null;
-  vin: string | null;
-  available: boolean;
-  locationId: ObjectId;
-  /** Denormalised review aggregates, recomputed when a review lands, so the
-   *  fleet grid does not need a lookup per card. */
-  ratingAvg: number;
-  reviewCount: number;
-  tripCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export const cars = pgTable(
+  "cars",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    slug: text().notNull().unique(),
+    make: text().notNull(),
+    model: text().notNull(),
+    year: smallint().notNull(),
+    bodyType: bodyTypeEnum().notNull(),
+    fuelType: fuelTypeEnum().notNull(),
+    transmission: transmissionEnum().notNull(),
+    seats: smallint().notNull(),
+    pricePerDay: money().notNull(),
+    imageUrl: text().notNull(),
+    mileage: text(),
+    description: text(),
+    vin: text(),
+    available: boolean().notNull().default(true),
+    /* A car must live somewhere, and `restrict` refuses to delete a branch
+     * that still has cars rather than orphaning them. */
+    locationId: uuid()
+      .notNull()
+      .references(() => locations.id, { onDelete: "restrict" }),
+    /** Denormalised review aggregates, recomputed when a review lands, so the
+     *  fleet grid does not need a join per card. */
+    ratingAvg: rating().notNull().default(0),
+    reviewCount: integer().notNull().default(0),
+    tripCount: integer().notNull().default(0),
+    ...timestamps,
+  },
+  (table) => [
+    /* Unique, but nullable: Postgres treats NULLs as distinct, so the VIN is
+     * enforced unique where recorded while any number of cars without one can
+     * coexist. */
+    uniqueIndex("cars_vin_unique").on(table.vin),
+    // The fleet grid's price sorts: available cars, cheapest (or dearest) first.
+    index("cars_available_price").on(table.available, table.pricePerDay),
+    /* The "Recommended" and "Top rated" sorts. Leading with `available`
+     * matches the equality filter every listing query applies, so the index
+     * serves both the filter and the sort in one pass. */
+    index("cars_available_rating").on(
+      table.available,
+      table.ratingAvg.desc(),
+      table.reviewCount.desc()
+    ),
+    index("cars_location_available").on(table.locationId, table.available),
+    index("cars_body_fuel").on(table.bodyType, table.fuelType),
+    check("cars_price_non_negative", sql`${table.pricePerDay} >= 0`),
+    check("cars_seats_positive", sql`${table.seats} > 0`),
+    check("cars_rating_range", sql`${table.ratingAvg} between 0 and 5`),
+    check("cars_review_count_non_negative", sql`${table.reviewCount} >= 0`),
+    check("cars_trip_count_non_negative", sql`${table.tripCount} >= 0`),
+  ]
+);
 
-export interface ReservationDoc {
-  _id: ObjectId;
-  /** Human-readable booking reference used in emails and support. */
-  reference: string;
-  carId: ObjectId;
-  userId: ObjectId;
-  pickupLocationId: ObjectId;
-  dropoffLocationId: ObjectId;
-  pickupAt: Date;
-  returnAt: Date;
-  /** Kept on the booking so the quote can be re-derived and audited: pricing
-   *  depends on it, and a renter's age changes between bookings. */
-  driverAge: number;
-  /* The full price breakdown, mirroring Quote in shared/lib/pricing.ts, so a
-   * charge can always be explained without re-running pricing against
-   * today's rates. */
-  days: number;
-  baseTotal: number;
-  youngDriverFee: number;
-  discount: number;
-  totalPrice: number;
-  currency: string;
-  promoCodeId: ObjectId | null;
-  status: ReservationStatus;
-  cancelledAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export const reservations = pgTable(
+  "reservations",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** Human-readable booking reference used in emails and support. */
+    reference: text().notNull().unique(),
+    carId: uuid()
+      .notNull()
+      .references(() => cars.id, { onDelete: "restrict" }),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    pickupLocationId: uuid()
+      .notNull()
+      .references(() => locations.id, { onDelete: "restrict" }),
+    dropoffLocationId: uuid()
+      .notNull()
+      .references(() => locations.id, { onDelete: "restrict" }),
+    pickupAt: timestamp({ withTimezone: true }).notNull(),
+    returnAt: timestamp({ withTimezone: true }).notNull(),
+    /** Kept on the booking so the quote can be re-derived and audited: pricing
+     *  depends on it, and a renter's age changes between bookings. */
+    driverAge: smallint().notNull(),
+    /* The full price breakdown, mirroring Quote in shared/lib/pricing.ts, so a
+     * charge can always be explained without re-running pricing against
+     * today's rates. */
+    days: integer().notNull(),
+    baseTotal: money().notNull(),
+    youngDriverFee: money().notNull(),
+    discount: money().notNull(),
+    totalPrice: money().notNull(),
+    currency: text().notNull(),
+    /* A promotion can be retired without erasing which booking used it, so
+     * this nulls out rather than blocking the delete. */
+    promoCodeId: uuid().references(() => promoCodes.id, { onDelete: "set null" }),
+    status: reservationStatusEnum().notNull().default("pending"),
+    cancelledAt: timestamp({ withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    /* Availability is resolved by these fields on every search — both
+     * fleet-wide (findBookedCarIds) and per car (hasOverlap). Status leads
+     * because it is an equality match, then the date range. */
+    index("reservations_status_window").on(table.status, table.pickupAt, table.returnAt),
+    index("reservations_car_status_window").on(
+      table.carId,
+      table.status,
+      table.pickupAt,
+      table.returnAt
+    ),
+    index("reservations_user_recent").on(table.userId, table.createdAt.desc()),
+    /* A rental cannot end before it starts — the day count, and every total
+     * derived from it, depends on this holding. */
+    check("reservations_window_ordered", sql`${table.returnAt} > ${table.pickupAt}`),
+    check("reservations_days_positive", sql`${table.days} >= 1`),
+    check(
+      "reservations_totals_non_negative",
+      sql`${table.baseTotal} >= 0 and ${table.youngDriverFee} >= 0 and ${table.discount} >= 0 and ${table.totalPrice} >= 0`
+    ),
+  ]
+);
 
-export interface PaymentDoc {
-  _id: ObjectId;
-  reservationId: ObjectId;
-  kind: PaymentKind;
-  status: PaymentStatus;
-  amount: number;
-  currency: string;
-  refundedAmount: number;
-  /** Set once Stripe creates the intent. The webhook looks a payment up by
-   *  it, and the unique index makes replayed webhooks idempotent. */
-  stripeIntentId: string | null;
-  idempotencyKey: string | null;
-  failureReason: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    reservationId: uuid()
+      .notNull()
+      .references(() => reservations.id, { onDelete: "cascade" }),
+    kind: paymentKindEnum().notNull(),
+    status: paymentStatusEnum().notNull(),
+    amount: money().notNull(),
+    currency: text().notNull(),
+    refundedAmount: money().notNull().default(0),
+    /** Set once Stripe creates the intent. The webhook looks a payment up by
+     *  it, and the unique index makes a replayed webhook idempotent. */
+    stripeIntentId: text(),
+    idempotencyKey: text(),
+    failureReason: text(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("payments_stripe_intent_unique").on(table.stripeIntentId),
+    uniqueIndex("payments_idempotency_key_unique").on(table.idempotencyKey),
+    index("payments_reservation_status").on(table.reservationId, table.status),
+    check("payments_amount_non_negative", sql`${table.amount} >= 0`),
+    // A refund cannot exceed what was charged.
+    check(
+      "payments_refund_within_amount",
+      sql`${table.refundedAmount} >= 0 and ${table.refundedAmount} <= ${table.amount}`
+    ),
+  ]
+);
 
-export interface ReviewDoc {
-  _id: ObjectId;
-  /** One review per completed trip, enforced by a unique index. */
-  reservationId: ObjectId;
-  carId: ObjectId;
-  userId: ObjectId;
-  rating: number;
-  comment: string | null;
-  createdAt: Date;
-}
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** One review per completed trip, enforced by the unique constraint. */
+    reservationId: uuid()
+      .notNull()
+      .unique()
+      .references(() => reservations.id, { onDelete: "cascade" }),
+    carId: uuid()
+      .notNull()
+      .references(() => cars.id, { onDelete: "cascade" }),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rating: smallint().notNull(),
+    comment: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("reviews_car_recent").on(table.carId, table.createdAt.desc()),
+    index("reviews_user").on(table.userId),
+    check(
+      "reviews_rating_range",
+      sql`${table.rating} between ${sql.raw(String(MIN_REVIEW_RATING))} and ${sql.raw(String(MAX_REVIEW_RATING))}`
+    ),
+  ]
+);
 
-export interface PromoCodeDoc {
-  _id: ObjectId;
-  /** Stored upper case; callers normalise before querying. */
-  code: string;
-  percentOff: number | null;
-  amountOff: number | null;
-  minDays: number | null;
-  maxRedemptions: number | null;
-  timesRedeemed: number;
-  validFrom: Date | null;
-  validTo: Date | null;
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export const promoCodes = pgTable(
+  "promo_codes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** Stored upper case, which the CHECK below enforces; callers normalise
+     *  before querying. */
+    code: text().notNull().unique(),
+    percentOff: numeric({ precision: 5, scale: 2, mode: "number" }),
+    amountOff: money(),
+    minDays: integer(),
+    maxRedemptions: integer(),
+    timesRedeemed: integer().notNull().default(0),
+    validFrom: timestamp({ withTimezone: true }),
+    validTo: timestamp({ withTimezone: true }),
+    active: boolean().notNull().default(true),
+    ...timestamps,
+  },
+  (table) => [
+    index("promo_codes_active").on(table.active),
+    check("promo_codes_upper_case", sql`${table.code} = upper(${table.code})`),
+    /* A promotion is a percentage off or a fixed amount off — never both and
+     * never neither, because pricing has no meaning for those two cases. */
+    check(
+      "promo_codes_one_discount_kind",
+      sql`(${table.percentOff} is null) <> (${table.amountOff} is null)`
+    ),
+    check(
+      "promo_codes_percent_range",
+      sql`${table.percentOff} is null or ${table.percentOff} between 0 and 100`
+    ),
+    check("promo_codes_redeemed_non_negative", sql`${table.timesRedeemed} >= 0`),
+  ]
+);
 
-/* -------------------------- Collection validators ---------------------
- * MongoDB's own schema enforcement. This is what replaces the guarantees a
- * generated ORM client used to give: the driver is untyped at runtime, so
- * without these a typo in a `$set` writes a malformed document silently.
- *
- * Nullable fields are declared as ["<type>", "null"] and still listed under
- * `required`, so the key must be present even when empty — that keeps
- * documents uniform and makes queries on missing data predictable.
+/* ------------------------------ Relations ---------------------------- */
+
+/* Declared so a repository can opt into Drizzle's relational queries
+ * (`db.query.reservations.findMany({ with: { car: true } })`) instead of
+ * hand-writing a join and stitching the rows back together. */
+
+export const locationsRelations = relations(locations, ({ many }) => ({
+  cars: many(cars),
+}));
+
+export const carsRelations = relations(cars, ({ one, many }) => ({
+  location: one(locations, { fields: [cars.locationId], references: [locations.id] }),
+  reservations: many(reservations),
+  reviews: many(reviews),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  reservations: many(reservations),
+  reviews: many(reviews),
+}));
+
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
+  car: one(cars, { fields: [reservations.carId], references: [cars.id] }),
+  user: one(users, { fields: [reservations.userId], references: [users.id] }),
+  pickupLocation: one(locations, {
+    fields: [reservations.pickupLocationId],
+    references: [locations.id],
+    relationName: "pickupLocation",
+  }),
+  dropoffLocation: one(locations, {
+    fields: [reservations.dropoffLocationId],
+    references: [locations.id],
+    relationName: "dropoffLocation",
+  }),
+  promoCode: one(promoCodes, {
+    fields: [reservations.promoCodeId],
+    references: [promoCodes.id],
+  }),
+  payments: many(payments),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [payments.reservationId],
+    references: [reservations.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  reservation: one(reservations, {
+    fields: [reviews.reservationId],
+    references: [reservations.id],
+  }),
+  car: one(cars, { fields: [reviews.carId], references: [cars.id] }),
+  user: one(users, { fields: [reviews.userId], references: [users.id] }),
+}));
+
+export const promoCodesRelations = relations(promoCodes, ({ many }) => ({
+  reservations: many(reservations),
+}));
+
+/* -------------------------------- Rows -------------------------------
+ * Inferred from the tables above, so a schema change updates them without a
+ * second declaration to keep in step. Repositories are typed against these,
+ * and backend/lib/serialize.ts maps them to the JSON shapes in shared/types.
  */
 
-type JsonSchema = Record<string, unknown>;
+export type UserRow = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 
-const objectId = { bsonType: "objectId" };
-const nullableString = { bsonType: ["string", "null"] };
-const nullableDate = { bsonType: ["date", "null"] };
-const nullableNumber = { bsonType: ["double", "int", "long", "null"] };
-const number = { bsonType: ["double", "int", "long"] };
-const int = { bsonType: ["int", "long"] };
+export type LocationRow = typeof locations.$inferSelect;
+export type NewLocation = typeof locations.$inferInsert;
 
-function validator(properties: JsonSchema, required: string[]): JsonSchema {
-  return {
-    $jsonSchema: {
-      bsonType: "object",
-      required: ["_id", ...required],
-      // Reject unknown keys, so a renamed field cannot quietly coexist with
-      // its old spelling.
-      additionalProperties: false,
-      properties: { _id: objectId, ...properties },
-    },
-  };
-}
+export type CarRow = typeof cars.$inferSelect;
+export type NewCar = typeof cars.$inferInsert;
 
-export const VALIDATORS: Record<string, JsonSchema> = {
-  [COLLECTIONS.users]: validator(
-    {
-      firstName: { bsonType: "string", minLength: 1 },
-      lastName: { bsonType: "string", minLength: 1 },
-      email: { bsonType: "string", pattern: "^.+@.+\\..+$" },
-      phone: nullableString,
-      passwordHash: nullableString,
-      emailVerified: nullableDate,
-      image: nullableString,
-      role: { enum: [...USER_ROLES] },
-      createdAt: { bsonType: "date" },
-      updatedAt: { bsonType: "date" },
-    },
-    [
-      "firstName",
-      "lastName",
-      "email",
-      "phone",
-      "passwordHash",
-      "emailVerified",
-      "image",
-      "role",
-      "createdAt",
-      "updatedAt",
-    ]
-  ),
+export type ReservationRow = typeof reservations.$inferSelect;
+export type NewReservation = typeof reservations.$inferInsert;
 
-  [COLLECTIONS.locations]: validator(
-    {
-      name: { bsonType: "string", minLength: 1 },
-      slug: { bsonType: "string", minLength: 1 },
-      address: { bsonType: "string" },
-      city: { bsonType: "string" },
-      state: { bsonType: "string" },
-      country: { bsonType: "string" },
-      lat: nullableNumber,
-      lng: nullableNumber,
-      timezone: { bsonType: "string" },
-      active: { bsonType: "bool" },
-    },
-    [
-      "name",
-      "slug",
-      "address",
-      "city",
-      "state",
-      "country",
-      "lat",
-      "lng",
-      "timezone",
-      "active",
-    ]
-  ),
+export type PaymentRow = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
 
-  [COLLECTIONS.cars]: validator(
-    {
-      slug: { bsonType: "string", minLength: 1 },
-      make: { bsonType: "string", minLength: 1 },
-      model: { bsonType: "string", minLength: 1 },
-      year: int,
-      bodyType: { enum: [...BODY_TYPES] },
-      fuelType: { enum: [...FUEL_TYPES] },
-      transmission: { enum: [...TRANSMISSIONS] },
-      seats: int,
-      pricePerDay: { ...number, minimum: 0 },
-      imageUrl: { bsonType: "string" },
-      mileage: nullableString,
-      description: nullableString,
-      vin: nullableString,
-      available: { bsonType: "bool" },
-      locationId: objectId,
-      ratingAvg: { ...number, minimum: 0, maximum: 5 },
-      reviewCount: { ...int, minimum: 0 },
-      tripCount: { ...int, minimum: 0 },
-      createdAt: { bsonType: "date" },
-      updatedAt: { bsonType: "date" },
-    },
-    [
-      "slug",
-      "make",
-      "model",
-      "year",
-      "bodyType",
-      "fuelType",
-      "transmission",
-      "seats",
-      "pricePerDay",
-      "imageUrl",
-      "mileage",
-      "description",
-      "vin",
-      "available",
-      "locationId",
-      "ratingAvg",
-      "reviewCount",
-      "tripCount",
-      "createdAt",
-      "updatedAt",
-    ]
-  ),
+export type ReviewRow = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;
 
-  [COLLECTIONS.reservations]: validator(
-    {
-      reference: { bsonType: "string", minLength: 1 },
-      carId: objectId,
-      userId: objectId,
-      pickupLocationId: objectId,
-      dropoffLocationId: objectId,
-      pickupAt: { bsonType: "date" },
-      returnAt: { bsonType: "date" },
-      driverAge: int,
-      days: { ...int, minimum: 1 },
-      baseTotal: { ...number, minimum: 0 },
-      youngDriverFee: { ...number, minimum: 0 },
-      discount: { ...number, minimum: 0 },
-      totalPrice: { ...number, minimum: 0 },
-      currency: { bsonType: "string" },
-      promoCodeId: { bsonType: ["objectId", "null"] },
-      status: { enum: [...RESERVATION_STATUSES] },
-      cancelledAt: nullableDate,
-      createdAt: { bsonType: "date" },
-      updatedAt: { bsonType: "date" },
-    },
-    [
-      "reference",
-      "carId",
-      "userId",
-      "pickupLocationId",
-      "dropoffLocationId",
-      "pickupAt",
-      "returnAt",
-      "driverAge",
-      "days",
-      "baseTotal",
-      "youngDriverFee",
-      "discount",
-      "totalPrice",
-      "currency",
-      "promoCodeId",
-      "status",
-      "cancelledAt",
-      "createdAt",
-      "updatedAt",
-    ]
-  ),
-
-  [COLLECTIONS.payments]: validator(
-    {
-      reservationId: objectId,
-      kind: { enum: [...PAYMENT_KINDS] },
-      status: { enum: [...PAYMENT_STATUSES] },
-      amount: { ...number, minimum: 0 },
-      currency: { bsonType: "string" },
-      refundedAmount: { ...number, minimum: 0 },
-      stripeIntentId: nullableString,
-      idempotencyKey: nullableString,
-      failureReason: nullableString,
-      createdAt: { bsonType: "date" },
-      updatedAt: { bsonType: "date" },
-    },
-    [
-      "reservationId",
-      "kind",
-      "status",
-      "amount",
-      "currency",
-      "refundedAmount",
-      "stripeIntentId",
-      "idempotencyKey",
-      "failureReason",
-      "createdAt",
-      "updatedAt",
-    ]
-  ),
-
-  [COLLECTIONS.reviews]: validator(
-    {
-      reservationId: objectId,
-      carId: objectId,
-      userId: objectId,
-      rating: { ...int, minimum: 1, maximum: 5 },
-      comment: nullableString,
-      createdAt: { bsonType: "date" },
-    },
-    ["reservationId", "carId", "userId", "rating", "comment", "createdAt"]
-  ),
-
-  [COLLECTIONS.promoCodes]: validator(
-    {
-      code: { bsonType: "string", minLength: 1 },
-      percentOff: nullableNumber,
-      amountOff: nullableNumber,
-      minDays: { bsonType: ["int", "long", "null"] },
-      maxRedemptions: { bsonType: ["int", "long", "null"] },
-      timesRedeemed: { ...int, minimum: 0 },
-      validFrom: nullableDate,
-      validTo: nullableDate,
-      active: { bsonType: "bool" },
-      createdAt: { bsonType: "date" },
-      updatedAt: { bsonType: "date" },
-    },
-    [
-      "code",
-      "percentOff",
-      "amountOff",
-      "minDays",
-      "maxRedemptions",
-      "timesRedeemed",
-      "validFrom",
-      "validTo",
-      "active",
-      "createdAt",
-      "updatedAt",
-    ]
-  ),
-};
+export type PromoCodeRow = typeof promoCodes.$inferSelect;
+export type NewPromoCode = typeof promoCodes.$inferInsert;
