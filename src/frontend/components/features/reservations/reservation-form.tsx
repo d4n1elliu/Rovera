@@ -72,7 +72,10 @@ export function ReservationForm({
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      router.push(`/confirmation?id=${json.data.id}`);
+      /* The booking reference, not the row id. It is what the renter quotes to
+       * support, it is designed to survive being read aloud, and it keeps the
+       * internal identifier out of a URL that gets bookmarked and shared. */
+      router.push(`/confirmation?ref=${encodeURIComponent(json.data.reference)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
