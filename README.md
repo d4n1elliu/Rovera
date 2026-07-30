@@ -1,6 +1,6 @@
 # Rovera
 
-Full-stack car rental platform built with Next.js, TypeScript, PostgreSQL (Supabase) and Tailwind CSS with Drizzle ORM as the data layer.
+Fullstack car rental platform built with Next.js, TypeScript, PostgreSQL (Supabase) and Tailwind CSS with Drizzle ORM as the data layer.
 
 ## Getting started
 
