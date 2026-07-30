@@ -100,12 +100,59 @@ UI always agree. Postgres columns are snake_case and TypeScript is camelCase and
 Drizzle maps between them automatically. Before data reaches the frontend it's
 serialised into JSON-safe shapes: prices as numbers, dates as ISO strings.
 
+### Row level security
+
+Every table has RLS enabled with no policies, applied by migration `0001`.
+That denies everyone — which is the point. Supabase publishes a REST API over
+these tables to anyone holding the anon key, and nothing here uses it: all
+access goes through the repositories, which connect as `postgres` and bypass
+RLS. Add a policy only if something is genuinely meant to be reachable with
+the anon key.
+
+## Deployment (Vercel)
+
+Set one environment variable in the Vercel project, for every environment that
+should reach the database:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | The Supabase **pooler** string, port `6543` |
+
+Use the pooler, not the direct connection on 5432. Each serverless function
+keeps its own pool, so the direct port runs into Postgres' connection limit as
+soon as a handful are warm. `db/client.ts` detects a `pooler.supabase.com` host
+and turns off prepared statements, which pgBouncer's transaction mode cannot
+support.
+
+Migrations run as part of the build. Vercel prefers a `vercel-build` script
+over `build` when one exists, so:
+
+```
+vercel-build = npm run db:migrate && next build
+```
+
+means a deploy applies pending migrations before it compiles, and a failed
+migration fails the build instead of shipping code that expects a table that
+does not exist yet. Local `npm run build` is left alone, so it stays fast and
+needs no database.
+
+Two things to know:
+
+- The build needs `DATABASE_URL` at **build** time, not just at runtime.
+- Deploys are assumed not to run concurrently. Two builds migrating the same
+  database at once is not protected against; if that becomes a possibility,
+  move migrations to a release step that runs once.
+
+The seed is deliberately not part of the build — it is development fixture
+data. Run `npm run db:seed` by hand against an environment that wants it.
+
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
+| `npm run vercel-build` | What Vercel runs — migrate, then build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:generate` | Diff `schema.ts` into a new SQL migration under `drizzle/` |
