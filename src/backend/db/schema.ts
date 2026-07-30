@@ -49,6 +49,19 @@ import {
  * the application, a migration, a maintenance script, or a hand-typed
  * statement in the SQL editor.
  *
+ * Every table calls `.enableRLS()` and defines NO policies. That combination
+ * is deliberate rather than half-finished: row level security with no policy
+ * denies everyone. Supabase publishes a REST API over these tables to anyone
+ * holding the anon key, and nothing here uses it — all access goes through
+ * the repositories, which connect as `postgres` and bypass RLS. So the rule
+ * being expressed is "deny every caller that is not this application", and
+ * RLS on with no policies is precisely that.
+ *
+ * It lives in the schema rather than being switched on in the Supabase
+ * dashboard so a new environment cannot come up unprotected: `npm run
+ * db:migrate` applies it everywhere. Add a policy only when something is
+ * genuinely meant to be reachable with the anon key.
+ *
  * Enum values come from shared/constants.ts rather than being redeclared, so
  * the database, the Zod schemas guarding the API, and the UI cannot drift
  * apart.
@@ -134,7 +147,7 @@ export const users = pgTable(
     check("users_first_name_not_blank", sql`length(trim(${table.firstName})) > 0`),
     check("users_last_name_not_blank", sql`length(trim(${table.lastName})) > 0`),
   ]
-);
+).enableRLS();
 
 /** Branches a car can be picked up from or returned to. Replaces the
  *  hard-coded LOCATIONS array once the read path is wired up. */
@@ -154,7 +167,7 @@ export const locations = pgTable(
     active: boolean().notNull().default(true),
   },
   (table) => [index("locations_active").on(table.active)]
-);
+).enableRLS();
 
 export const cars = pgTable(
   "cars",
@@ -209,7 +222,7 @@ export const cars = pgTable(
     check("cars_review_count_non_negative", sql`${table.reviewCount} >= 0`),
     check("cars_trip_count_non_negative", sql`${table.tripCount} >= 0`),
   ]
-);
+).enableRLS();
 
 export const reservations = pgTable(
   "reservations",
@@ -271,7 +284,7 @@ export const reservations = pgTable(
       sql`${table.baseTotal} >= 0 and ${table.youngDriverFee} >= 0 and ${table.discount} >= 0 and ${table.totalPrice} >= 0`
     ),
   ]
-);
+).enableRLS();
 
 export const payments = pgTable(
   "payments",
@@ -303,7 +316,7 @@ export const payments = pgTable(
       sql`${table.refundedAmount} >= 0 and ${table.refundedAmount} <= ${table.amount}`
     ),
   ]
-);
+).enableRLS();
 
 export const reviews = pgTable(
   "reviews",
@@ -332,7 +345,7 @@ export const reviews = pgTable(
       sql`${table.rating} between ${sql.raw(String(MIN_REVIEW_RATING))} and ${sql.raw(String(MAX_REVIEW_RATING))}`
     ),
   ]
-);
+).enableRLS();
 
 export const promoCodes = pgTable(
   "promo_codes",
@@ -366,7 +379,7 @@ export const promoCodes = pgTable(
     ),
     check("promo_codes_redeemed_non_negative", sql`${table.timesRedeemed} >= 0`),
   ]
-);
+).enableRLS();
 
 /* ------------------------------ Relations ---------------------------- */
 
