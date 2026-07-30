@@ -38,8 +38,10 @@ working with RLS on and no policies.
 Next.js loads `.env.local` in preference to `.env`. Standalone scripts load
 neither on their own, so every `db:*` script runs through
 `scripts/with-env.mjs`, which applies the same precedence before handing off.
-That keeps the seed and the running app pointed at the same database. Real
-environment variables (Vercel, CI) still win over both files.
+That keeps migrations, the seed and the running app pointed at the same
+database. Real environment variables (Vercel, CI) still win over both files.
+
+Set `DB_LOGGING=true` to have every SQL statement logged.
 
 ## Architecture
 

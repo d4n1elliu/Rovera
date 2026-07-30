@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, pluralise } from "@/shared/utils";
-import { carRating } from "@/frontend/lib/rating";
 import type { Quote } from "@/shared/lib/pricing";
 import type { Car } from "@/shared/types";
 
@@ -19,8 +18,10 @@ export function CarCard({
    *  does not re-enter dates, age or promo code they have already given. */
   searchQuery?: string;
 }) {
-  const { rating, reviews } = carRating(car.id);
   const bookHref = `/reservation?carId=${car.id}${searchQuery ? `&${searchQuery}` : ""}`;
+  // Ratings come from reviews now, so a car nobody has reviewed has none to
+  // show. Saying so beats rendering a hollow "0.0 (0 trips)".
+  const isRated = car.reviewCount > 0;
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md">
@@ -50,13 +51,20 @@ export function CarCard({
             <p className="text-sm text-gray-500">
               {car.year} · {car.transmission} · {car.seats} seats
             </p>
-            <p className="mt-1 text-sm">
-              <span aria-hidden className="text-amber-500">
-                ★
-              </span>{" "}
-              <span className="font-medium">{rating.toFixed(1)}</span>{" "}
-              <span className="text-gray-500">({reviews} trips)</span>
-            </p>
+            {isRated ? (
+              <p className="mt-1 text-sm">
+                <span aria-hidden className="text-amber-500">
+                  ★
+                </span>{" "}
+                <span className="font-medium">{car.ratingAvg.toFixed(1)}</span>{" "}
+                <span className="text-gray-500">
+                  ({pluralise(car.reviewCount, "review")}
+                  {car.tripCount > 0 && ` · ${pluralise(car.tripCount, "trip")}`})
+                </span>
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-gray-500">Not yet reviewed</p>
+            )}
           </div>
           <p className="text-right">
             <span className="font-semibold">{formatPrice(car.pricePerDay)}</span>
