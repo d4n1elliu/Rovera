@@ -48,7 +48,7 @@ export default function ConfirmationPage({
       )}
 
       <p className="text-gray-500">
-        Keep this reference — quote it if you need to get in touch about the
+        Keep this reference, quote it if you need to get in touch about the
         booking. You can find it again any time under your rentals.
       </p>
 
