@@ -131,17 +131,25 @@ should reach the database:
 | --- | --- |
 | `DATABASE_URL` | The Supabase **pooler** string, port `6543` |
 
-Use the pooler, not the direct connection on 5432. Each serverless function
-keeps its own pool, so the direct port runs into Postgres' connection limit as
-soon as a handful are warm. `db/client.ts` detects a `pooler.supabase.com` host
-and turns off prepared statements, which pgBouncer's transaction mode cannot
-support.
+Supabase offers three ways in, and they are not interchangeable:
+
+| | Host | IPv4 | Use for |
+| --- | --- | --- | --- |
+| Transaction pooler `:6543` | `…pooler.supabase.com` | yes | the app |
+| Session pooler `:5432` | `…pooler.supabase.com` | yes | migrations |
+| Direct `:5432` | `db.<ref>.supabase.co` | **no — IPv6 only** | nothing here |
+
+The direct connection resolves to an IPv6 address only, and Vercel's build
+containers have no IPv6 route, so a build using it dies on connect. Each
+serverless function also keeps its own pool, which is why the app wants the
+pooler regardless. `db/client.ts` detects a `pooler.supabase.com` host and
+turns off prepared statements, which transaction mode cannot carry.
 
 Migrations run as part of the build. Vercel prefers a `vercel-build` script
 over `build` when one exists, so:
 
 ```
-vercel-build = npm run db:migrate && next build
+vercel-build = npm run db:check && npm run db:migrate && next build
 ```
 
 means a deploy applies pending migrations before it compiles, and a failed
@@ -149,9 +157,20 @@ migration fails the build instead of shipping code that expects a table that
 does not exist yet. Local `npm run build` is left alone, so it stays fast and
 needs no database.
 
+`db:check` is a preflight (`scripts/db-preflight.mjs`). It prints the host,
+port and pooling mode it is about to use, then proves the connection works.
+It exists because the alternative is what it replaced: a build that failed
+four hundred milliseconds into `drizzle-kit migrate` having printed nothing
+but a spinner. It recognises the IPv6-only direct host, an unresolvable
+hostname, a refused port, a paused project and a rejected password, and says
+which one happened. It never prints the password. Run it by hand any time
+with `npm run db:check`.
+
 Two things to know:
 
-- The build needs `DATABASE_URL` at **build** time, not just at runtime.
+- The build needs `DATABASE_URL` at **build** time, not just at runtime, and
+  Vercel scopes variables per environment — a branch deploy is a *Preview*, so
+  a variable set only for Production will not be there.
 - Deploys are assumed not to run concurrently. Two builds migrating the same
   database at once is not protected against; if that becomes a possibility,
   move migrations to a release step that runs once.
@@ -168,6 +187,7 @@ data. Run `npm run db:seed` by hand against an environment that wants it.
 | `npm run vercel-build` | What Vercel runs — migrate, then build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:check` | Preflight — show the connection target and prove it is reachable |
 | `npm run db:generate` | Diff `schema.ts` into a new SQL migration under `drizzle/` |
 | `npm run db:migrate` | Apply pending migrations — create tables, enums, constraints and indexes |
 | `npm run db:seed` | Seed reference data and demo bookings (idempotent) |
