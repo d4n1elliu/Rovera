@@ -4,15 +4,20 @@ import Link from "next/link";
 export const metadata: Metadata = { title: "Booking confirmed" };
 
 /* Reached by redirect from the reservation form, carrying the booking
- * reference. No confirmation email is sent yet, so this page is the only
- * record the renter leaves with — which is why the reference is presented as
- * something to keep rather than as a footnote. */
+ * reference and whether a confirmation email actually went out.
+ *
+ * The email is only mentioned when one was really sent. Sending depends on a
+ * provider key that an environment may not have, and a page that claims an
+ * email regardless is how this screen previously came to tell every renter
+ * something untrue. Either way the reference is presented as something to
+ * keep, because it is the record that always exists. */
 export default function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: { ref?: string };
+  searchParams: { ref?: string; emailed?: string };
 }) {
   const reference = searchParams.ref;
+  const emailed = searchParams.emailed === "1";
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center">
@@ -33,6 +38,12 @@ export default function ConfirmationPage({
       ) : (
         <p className="text-gray-500">
           Your booking is saved. You can find it under your rentals.
+        </p>
+      )}
+
+      {emailed && (
+        <p className="text-gray-500">
+          A confirmation email is on its way with the details.
         </p>
       )}
 
