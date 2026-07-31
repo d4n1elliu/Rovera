@@ -21,17 +21,8 @@ Unlike the previous MongoDB setup, no special local configuration is needed:
 Postgres has native transactions, so the booking double booking guard works out
 of the box, which means there is no replica set to initialise.
 
-If you access the tables only through the app (Drizzle, server-side), enable
-Row Level Security on every table so Supabase's public Data API can't be used to
-read or write them directly with the anon key:
-
-```sql
-alter table cars enable row level security;
--- ...repeat for locations, reservations, users, payments, reviews, promo_codes
-```
-
-Drizzle connects as the `postgres` role and bypasses RLS, so the app keeps
-working with RLS on and no policies.
+Supabase's public Data API is locked off by the migrations — nothing to switch
+on by hand. See [Locking off the public API](#locking-off-the-public-api).
 
 ### Environment files
 
@@ -100,14 +91,36 @@ UI always agree. Postgres columns are snake_case and TypeScript is camelCase and
 Drizzle maps between them automatically. Before data reaches the frontend it's
 serialised into JSON-safe shapes: prices as numbers, dates as ISO strings.
 
-### Row level security
+### Locking off the public API
 
-Every table has RLS enabled with no policies, applied by migration `0001`.
-That denies everyone — which is the point. Supabase publishes a REST API over
-these tables to anyone holding the anon key, and nothing here uses it: all
-access goes through the repositories, which connect as `postgres` and bypass
-RLS. Add a policy only if something is genuinely meant to be reachable with
-the anon key.
+Supabase publishes a REST API over `public` to anyone holding the anon key,
+which is a value that ships to browsers. Nothing here uses it — every query
+goes through the repositories, which connect as `postgres`. So the database is
+closed to that path entirely, by two independent migrations:
+
+| Migration | Layer | Effect |
+| --- | --- | --- |
+| `0001` | Row level security | Every table has RLS on and **no policies**. RLS with no policy denies everyone. |
+| `0002` | Privileges | `anon` and `authenticated` have their table, sequence and function privileges revoked, including the default privileges that would otherwise apply to future tables. |
+
+Either alone would do the job today. Both are there because one mistake should
+not be enough to expose the data: with only RLS, a single `disable row level
+security` or one over-broad policy reopens everything; with only the revoke, a
+stray `grant` does the same. An attacker with the anon key now hits
+`permission denied` before RLS is even consulted.
+
+`postgres` bypasses both — it owns the tables and holds `BYPASSRLS` — so the
+app is unaffected. `service_role` is left intact as the escape hatch for
+trusted server-side tooling.
+
+Two consequences worth knowing:
+
+- **A new table is not automatically protected by RLS.** `0002` means it will
+  at least have no anon privileges, but remember `.enableRLS()` on the table in
+  `schema.ts` so both layers hold.
+- **If you ever do want browser-side Supabase queries**, this is what you undo:
+  grant the privilege back and write an actual RLS policy. Both are deliberate
+  steps rather than defaults you have inherited.
 
 ## Deployment (Vercel)
 

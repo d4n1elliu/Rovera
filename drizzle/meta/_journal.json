@@ -15,6 +15,13 @@
       "when": 1785428335605,
       "tag": "0001_blue_black_crow",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785464678840,
+      "tag": "0002_revoke_public_api_grants",
+      "breakpoints": true
     }
   ]
 }
