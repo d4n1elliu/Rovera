@@ -72,7 +72,15 @@ export function ReservationForm({
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
-      router.push(`/confirmation?id=${json.data.id}`);
+      /* The booking reference, not the row id. It is what the renter quotes to
+       * support, it is designed to survive being read aloud, and it keeps the
+       * internal identifier out of a URL that gets bookmarked and shared. */
+      const params = new URLSearchParams({ ref: json.data.reference });
+      /* Carried through so the confirmation screen only promises an email that
+       * was actually sent. The address itself is deliberately not passed —
+       * this URL gets bookmarked and shared. */
+      if (json.data.emailSent) params.set("emailed", "1");
+      router.push(`/confirmation?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
