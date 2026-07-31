@@ -21,17 +21,8 @@ Unlike the previous MongoDB setup, no special local configuration is needed:
 Postgres has native transactions, so the booking double booking guard works out
 of the box, which means there is no replica set to initialise.
 
-If you access the tables only through the app (Drizzle, server-side), enable
-Row Level Security on every table so Supabase's public Data API can't be used to
-read or write them directly with the anon key:
-
-```sql
-alter table cars enable row level security;
--- ...repeat for locations, reservations, users, payments, reviews, promo_codes
-```
-
-Drizzle connects as the `postgres` role and bypasses RLS, so the app keeps
-working with RLS on and no policies.
+Supabase's public Data API is locked off by the migrations — nothing to switch
+on by hand. See [Locking off the public API](#locking-off-the-public-api).
 
 ### Environment files
 
@@ -100,12 +91,81 @@ UI always agree. Postgres columns are snake_case and TypeScript is camelCase and
 Drizzle maps between them automatically. Before data reaches the frontend it's
 serialised into JSON-safe shapes: prices as numbers, dates as ISO strings.
 
+### Locking off the public API
+
+Supabase publishes a REST API over `public` to anyone holding the anon key,
+which is a value that ships to browsers. Nothing here uses it — every query
+goes through the repositories, which connect as `postgres`. So the database is
+closed to that path entirely, by two independent migrations:
+
+| Migration | Layer | Effect |
+| --- | --- | --- |
+| `0001` | Row level security | Every table has RLS on and **no policies**. RLS with no policy denies everyone. |
+| `0002` | Privileges | `anon` and `authenticated` have their table, sequence and function privileges revoked, including the default privileges that would otherwise apply to future tables. |
+
+Either alone would do the job today. Both are there because one mistake should
+not be enough to expose the data: with only RLS, a single `disable row level
+security` or one over-broad policy reopens everything; with only the revoke, a
+stray `grant` does the same. An attacker with the anon key now hits
+`permission denied` before RLS is even consulted.
+
+`postgres` bypasses both — it owns the tables and holds `BYPASSRLS` — so the
+app is unaffected. `service_role` is left intact as the escape hatch for
+trusted server-side tooling.
+
+Two consequences worth knowing:
+
+- **A new table is not automatically protected by RLS.** `0002` means it will
+  at least have no anon privileges, but remember `.enableRLS()` on the table in
+  `schema.ts` so both layers hold.
+- **If you ever do want browser-side Supabase queries**, this is what you undo:
+  grant the privilege back and write an actual RLS policy. Both are deliberate
+  steps rather than defaults you have inherited.
+
+## Deployment (Vercel)
+
+Set one environment variable in the Vercel project, for every environment that
+should reach the database:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | The Supabase **pooler** string, port `6543` |
+
+Use the pooler, not the direct connection on 5432. Each serverless function
+keeps its own pool, so the direct port runs into Postgres' connection limit as
+soon as a handful are warm. `db/client.ts` detects a `pooler.supabase.com` host
+and turns off prepared statements, which pgBouncer's transaction mode cannot
+support.
+
+Migrations run as part of the build. Vercel prefers a `vercel-build` script
+over `build` when one exists, so:
+
+```
+vercel-build = npm run db:migrate && next build
+```
+
+means a deploy applies pending migrations before it compiles, and a failed
+migration fails the build instead of shipping code that expects a table that
+does not exist yet. Local `npm run build` is left alone, so it stays fast and
+needs no database.
+
+Two things to know:
+
+- The build needs `DATABASE_URL` at **build** time, not just at runtime.
+- Deploys are assumed not to run concurrently. Two builds migrating the same
+  database at once is not protected against; if that becomes a possibility,
+  move migrations to a release step that runs once.
+
+The seed is deliberately not part of the build — it is development fixture
+data. Run `npm run db:seed` by hand against an environment that wants it.
+
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
 | `npm run build` | Production build |
+| `npm run vercel-build` | What Vercel runs — migrate, then build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:generate` | Diff `schema.ts` into a new SQL migration under `drizzle/` |
