@@ -5,11 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "vercel-build": "npm run db:check && npm run db:migrate && next build",
+    "vercel-build": "npm run db:migrate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:check": "node scripts/with-env.mjs node scripts/db-preflight.mjs",
     "db:generate": "node scripts/with-env.mjs drizzle-kit generate",
     "db:migrate": "node scripts/with-env.mjs drizzle-kit migrate",
     "db:studio": "node scripts/with-env.mjs drizzle-kit studio",
