@@ -34,6 +34,36 @@ database. Real environment variables (Vercel, CI) still win over both files.
 
 Set `DB_LOGGING=true` to have every SQL statement logged.
 
+### Confirmation emails
+
+A booking confirmation is sent through [Resend](https://resend.com) after the
+reservation is written.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `RESEND_API_KEY` | to send at all | Resend API key |
+| `EMAIL_FROM` | no | Sender, e.g. `Rovera <bookings@yourdomain>`. Defaults to Resend's sandbox sender. |
+| `NEXT_PUBLIC_SITE_URL` | no | Absolute base for links in emails. Falls back to `VERCEL_URL`, then localhost. |
+
+**Sending is optional.** With no `RESEND_API_KEY` the module is inert: the
+booking still succeeds, the send is skipped, and in development it logs the
+message it would have sent. Local work and CI need no credential.
+
+A send never fails a booking. The reservation is already committed by the
+time the email is attempted, and a provider outage is not a reason to tell a
+renter their booking did not happen — so failures are logged and reported,
+never thrown.
+
+Whether the email actually went out is carried back to the confirmation
+screen, which mentions the email only when one was really sent. This screen
+previously told every renter an email was on its way when nothing sent email
+at all; making the claim conditional is what stops that recurring in an
+environment without a key.
+
+Resend only delivers to arbitrary recipients from a **verified domain**. Its
+sandbox sender works immediately but reaches only the address that owns the
+API key — enough to watch the flow end to end before a domain exists.
+
 ## Architecture
 
 ```
@@ -52,7 +82,8 @@ src/
 │   ├── db/             client.ts (Drizzle + postgres.js client), schema.ts (table
 │   │                   definitions, enums, constraints, indexes), seed.ts,
 │   │                   aggregates.ts (denormalised review aggregates)
-│   ├── lib/            Server-only helpers (booking references, serialisation)
+│   ├── lib/            Server-only helpers (booking references, serialisation,
+│   │                   email/ — Resend client + confirmation template)
 │   └── data/           Seed fixtures (cars.json)
 │
 ├── shared/             Code used by BOTH sides

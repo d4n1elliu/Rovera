@@ -2,8 +2,11 @@ import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { toReservation, toReservationWithCar } from "@/backend/lib/serialize";
+import { buildBookingConfirmation } from "@/backend/lib/email/booking-confirmation";
+import { sendEmail } from "@/backend/lib/email/client";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
 import { quoteRental } from "@/shared/lib/pricing";
+import type { Reservation } from "@/shared/types";
 
 export async function createReservation(rawInput: unknown) {
   const input = reservationSchema.parse(rawInput);
@@ -51,8 +54,28 @@ export async function createReservation(rawInput: unknown) {
     totalPrice: quote.total,
   });
 
-  return toReservation(reservation);
+  /* Sent after the booking is committed, and deliberately not inside the
+   * transaction: an email cannot be rolled back, so a message promising a
+   * booking that was then rolled back would be worse than no message.
+   *
+   * sendEmail never throws — the booking is already durable, and a provider
+   * outage is not a reason to tell a renter their reservation failed. The
+   * outcome is returned instead, so the confirmation screen can say what
+   * actually happened rather than promising an email that may not exist. */
+  const delivery = await sendEmail(
+    buildBookingConfirmation({
+      reservation,
+      car,
+      firstName: input.firstName,
+      to: input.email,
+    })
+  );
+
+  return { ...toReservation(reservation), emailSent: delivery.sent };
 }
+
+/** A created booking, plus whether its confirmation email actually went out. */
+export type CreatedReservation = Reservation & { emailSent: boolean };
 
 export async function getRentalHistory(email: string) {
   const history = await reservationRepository.findByUserEmail(email);
