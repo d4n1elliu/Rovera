@@ -1,8 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
+import { auth } from "@/auth";
 import { createReservation, getRentalHistory } from "@/backend/services/reservation.service";
 
-// POST /api/reservations — create a reservation
+export const runtime = "nodejs";
+
+/* POST /api/reservations — create a reservation.
+ *
+ * Deliberately open. Booking without an account is a product feature: the
+ * reservation flow upserts the renter by email, and signing up later claims
+ * that same row rather than creating a second one. Requiring a session here
+ * would remove the ability to book as a guest. */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -20,12 +28,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET /api/reservations?email=… — list a customer's reservations
-export async function GET(request: NextRequest) {
-  const email = request.nextUrl.searchParams.get("email");
-  if (!email) {
-    return NextResponse.json({ success: false, error: "email is required" }, { status: 400 });
+/* GET /api/reservations — the signed-in renter's reservations.
+ *
+ * The address comes from the session. This used to read ?email=, which
+ * returned any renter's booking history to anyone who supplied their
+ * address. */
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user?.email) {
+    return NextResponse.json({ success: false, error: "Not signed in" }, { status: 401 });
   }
-  const reservations = await getRentalHistory(email);
+
+  const reservations = await getRentalHistory(session.user.email);
   return NextResponse.json({ success: true, data: reservations });
 }
