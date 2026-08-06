@@ -1,5 +1,6 @@
 import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
+import { locationRepository } from "@/backend/repositories/location.repository";
 import {
   promoCodeRepository,
   toPromotion,
@@ -32,6 +33,13 @@ export async function createReservation(rawInput: unknown) {
     promotion: promoRow ? toPromotion(promoRow) : null,
   });
 
+  /* Chosen branches, resolved against the locations table; a missing or
+   * retired branch falls back to the car's own rather than failing. */
+  const [pickup, dropoff] = await Promise.all([
+    input.pickupLocation ? locationRepository.findActiveByName(input.pickupLocation) : null,
+    input.dropoffLocation ? locationRepository.findActiveByName(input.dropoffLocation) : null,
+  ]);
+
   const overlaps = await reservationRepository.hasOverlap(
     car.id,
     input.pickupDate,
@@ -47,11 +55,8 @@ export async function createReservation(rawInput: unknown) {
       email: input.email,
       phone: input.phone,
     },
-    // The booking form does not collect branches yet, so a rental starts and
-    // ends where the car lives. The search widget's locations replace this
-    // once that path is wired up.
-    pickupLocationId: car.locationId,
-    dropoffLocationId: car.locationId,
+    pickupLocationId: pickup?.id ?? car.locationId,
+    dropoffLocationId: dropoff?.id ?? pickup?.id ?? car.locationId,
     pickupAt: input.pickupDate,
     returnAt: input.returnDate,
     driverAge: input.driverAge,

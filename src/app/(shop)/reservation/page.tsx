@@ -15,6 +15,8 @@ export default async function ReservationPage({
     promo?: string;
     pickup?: string;
     return?: string;
+    pickupLocation?: string;
+    dropoffLocation?: string;
   };
 }) {
   if (!searchParams.carId) redirect("/cars");
@@ -41,6 +43,8 @@ export default async function ReservationPage({
         defaultPromoCode={searchParams.promo ?? ""}
         defaultPickupDate={searchParams.pickup ?? ""}
         defaultReturnDate={searchParams.return ?? ""}
+        defaultPickupLocation={searchParams.pickupLocation ?? ""}
+        defaultDropoffLocation={searchParams.dropoffLocation ?? ""}
       />
     </div>
   );

@@ -8,16 +8,24 @@ import {
   DriverAgeSelect,
   normaliseDriverAge,
 } from "@/frontend/components/features/booking/driver-age-select";
+import { LocationSelect } from "@/frontend/components/features/booking/location-select";
 import { PromoCodeField } from "@/frontend/components/features/booking/promo-code-field";
 import { findPromotion, normalisePromoCode, promotionLabel } from "@/shared/config/promotions";
 import { toDateInput } from "@/shared/lib/datetime";
 import { reservationSchema } from "@/shared/schemas/reservation.schema";
 import {
   DEFAULT_DRIVER_AGE,
+  LOCATIONS,
   YOUNG_DRIVER_AGE,
   YOUNG_DRIVER_FEE_PER_DAY,
+  type Location,
 } from "@/shared/constants";
 import { formatPrice } from "@/shared/utils";
+
+/** A default from the URL is only trusted if it names a real branch. */
+function normaliseLocation(value: string): Location {
+  return (LOCATIONS as readonly string[]).includes(value) ? (value as Location) : LOCATIONS[0];
+}
 
 export function ReservationForm({
   carId,
@@ -25,12 +33,16 @@ export function ReservationForm({
   defaultPromoCode = "",
   defaultPickupDate = "",
   defaultReturnDate = "",
+  defaultPickupLocation = "",
+  defaultDropoffLocation = "",
 }: {
   carId: string;
   defaultDriverAge?: number;
   defaultPromoCode?: string;
   defaultPickupDate?: string;
   defaultReturnDate?: string;
+  defaultPickupLocation?: string;
+  defaultDropoffLocation?: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +55,12 @@ export function ReservationForm({
   const [today, setToday] = useState("");
   const [pickupDate, setPickupDate] = useState(defaultPickupDate);
   const [returnDate, setReturnDate] = useState(defaultReturnDate);
+  const [pickupLocation, setPickupLocation] = useState<string>(() =>
+    normaliseLocation(defaultPickupLocation)
+  );
+  const [dropoffLocation, setDropoffLocation] = useState<string>(() =>
+    normaliseLocation(defaultDropoffLocation || defaultPickupLocation)
+  );
 
   useEffect(() => {
     setToday(toDateInput(new Date()));
@@ -133,6 +151,29 @@ export function ReservationForm({
           )
         )}
       </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="text-sm text-gray-600">
+          <span className="block">Pickup location</span>
+          <LocationSelect
+            name="pickupLocation"
+            label="Pickup location"
+            value={pickupLocation}
+            onChange={setPickupLocation}
+            className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3"
+          />
+        </div>
+        <div className="text-sm text-gray-600">
+          <span className="block">Drop-off location</span>
+          <LocationSelect
+            name="dropoffLocation"
+            label="Drop-off location"
+            value={dropoffLocation}
+            onChange={setDropoffLocation}
+            className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3"
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm text-gray-600">
           Pickup date

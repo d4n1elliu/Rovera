@@ -36,6 +36,8 @@ export default async function CarsPage({
     return: search.returnAt ? toDateInput(search.returnAt) : undefined,
     driverAge: String(search.driverAge),
     promo: search.promoCode ?? undefined,
+    pickupLocation: search.pickupLocation ?? undefined,
+    dropoffLocation: search.dropoffLocation ?? undefined,
   });
 
   // Everything except the page number, so a page link keeps the whole search.
