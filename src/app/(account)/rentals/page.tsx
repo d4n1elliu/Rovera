@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { auth, SIGN_IN_PATH } from "@/auth";
 import { getRentalHistory } from "@/backend/services/reservation.service";
 import { formatDate, formatPrice } from "@/shared/utils";
 
@@ -7,11 +9,14 @@ export const metadata: Metadata = { title: "My rentals" };
 // Rendered per-request: rental history is per-customer data from the DB.
 export const dynamic = "force-dynamic";
 
-// TODO: derive the email from the signed-in session once auth is wired up.
-const DEMO_EMAIL = "demo@example.com";
-
 export default async function RentalsPage() {
-  const rentals = await getRentalHistory(DEMO_EMAIL);
+  /* Checked here as well as in middleware. Middleware only sees requests that
+   * match its config, so a page that reads one renter's data confirms who is
+   * asking rather than assuming something upstream already did. */
+  const session = await auth();
+  if (!session?.user?.email) redirect(`${SIGN_IN_PATH}?callbackUrl=/rentals`);
+
+  const rentals = await getRentalHistory(session.user.email);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">

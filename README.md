@@ -34,6 +34,33 @@ database. Real environment variables (Vercel, CI) still win over both files.
 
 Set `DB_LOGGING=true` to have every SQL statement logged.
 
+### Authentication
+
+Email and password, via NextAuth, against the existing `users` table.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `AUTH_SECRET` | **yes** | Signs the session JWT. Generate with `npx auth secret`. |
+| `AUTH_URL` | on Vercel only if the URL is not auto-detected | Canonical site URL |
+
+Sessions are JWTs rather than database rows. A database adapter would need
+its own `accounts`, `sessions` and `verificationTokens` tables and expects a
+`users` shape this schema does not have — it wants one `name` field, where a
+rental needs first and last separately. It would also add a query per
+request. Nothing here needs server-side session revocation yet, which is the
+one thing database sessions buy.
+
+**Guest bookings become accounts.** `users.passwordHash` is nullable on
+purpose: booking without signing up creates the row, and registering later
+fills that same row in rather than inserting a second one — so a renter's
+existing bookings are still theirs. Registering against an address that
+already has a password is refused.
+
+`/account` and `/rentals` are gated in `src/middleware.ts`, and the API
+routes and server components check the session themselves as well.
+Middleware only sees requests matching its config, so anything reading one
+renter's data confirms who is asking rather than assuming.
+
 ### Confirmation emails
 
 A booking confirmation is sent through [Resend](https://resend.com) after the
