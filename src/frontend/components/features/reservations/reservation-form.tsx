@@ -94,11 +94,10 @@ export function ReservationForm({
        * support, it is designed to survive being read aloud, and it keeps the
        * internal identifier out of a URL that gets bookmarked and shared. */
       const params = new URLSearchParams({ ref: json.data.reference });
-      /* Carried through so the confirmation screen only promises an email that
-       * was actually sent. The address itself is deliberately not passed —
-       * this URL gets bookmarked and shared. */
+      // Set only when the email really sent, so the next screen cannot overpromise.
       if (json.data.emailSent) params.set("emailed", "1");
-      router.push(`/confirmation?${params.toString()}`);
+      // Payment comes next; checkout falls through to confirmation when unavailable.
+      router.push(`/checkout?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
