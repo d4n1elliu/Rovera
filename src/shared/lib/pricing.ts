@@ -1,6 +1,6 @@
 import { YOUNG_DRIVER_AGE, YOUNG_DRIVER_FEE_PER_DAY } from "@/shared/constants";
 import { evaluatePromoCode, type Promotion } from "@/shared/config/promotions";
-import { hoursBetween } from "@/shared/lib/datetime";
+import { wallClockHoursBetween } from "@/shared/lib/datetime";
 
 export interface QuoteInput {
   pricePerDay: number;
@@ -25,9 +25,10 @@ function roundMoney(amount: number) {
   return Math.round(amount * 100) / 100;
 }
 
-/** Billable days for a rental scheduled by the hour. */
+/** Billable days for a rental scheduled by the hour. Wall-clock hours, so a
+ *  rental spanning a daylight-saving change bills the nights actually had. */
 export function billableDays(pickupAt: Date, returnAt: Date) {
-  return Math.max(1, Math.ceil(hoursBetween(pickupAt, returnAt) / 24));
+  return Math.max(1, Math.ceil(wallClockHoursBetween(pickupAt, returnAt) / 24));
 }
 
 export function isYoungDriver(driverAge: number) {

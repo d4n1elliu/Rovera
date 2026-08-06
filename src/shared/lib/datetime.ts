@@ -69,6 +69,19 @@ export function exactHoursBetween(start: Date, end: Date) {
   return (end.getTime() - start.getTime()) / MS_PER_HOUR;
 }
 
+/**
+ * Whole hours between two instants as a clock shows them, ignoring any
+ * daylight-saving shift in between.
+ *
+ * Used for billing: a 3-night rental over a DST change is 73 (or 71) real
+ * hours, which would bill as 4 (or 2) days. Availability keeps using real
+ * elapsed time — the car genuinely is gone for 73 hours.
+ */
+export function wallClockHoursBetween(start: Date, end: Date) {
+  const shiftMs = (end.getTimezoneOffset() - start.getTimezoneOffset()) * 60 * 1000;
+  return Math.max(0, Math.ceil((end.getTime() - start.getTime() - shiftMs) / MS_PER_HOUR));
+}
+
 /** Midnight at the start of the given day, in local time. */
 export function startOfDay(date: Date) {
   const start = new Date(date);
