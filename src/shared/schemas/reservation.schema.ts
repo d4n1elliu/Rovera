@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_DRIVER_AGE, MIN_DRIVER_AGE } from "@/shared/constants";
+import { LOCATIONS, MAX_DRIVER_AGE, MIN_DRIVER_AGE } from "@/shared/constants";
 import { startOfDay } from "@/shared/lib/datetime";
 import { validateRentalWindow } from "@/shared/lib/rental-rules";
 
@@ -16,6 +16,9 @@ export const reservationSchema = z
       .min(MIN_DRIVER_AGE, `Drivers must be at least ${MIN_DRIVER_AGE}`)
       .max(MAX_DRIVER_AGE, "Enter a valid driver age"),
     promoCode: z.string().trim().max(32).optional(),
+    // Optional so older links still book; the server falls back to the car's branch.
+    pickupLocation: z.enum(LOCATIONS).optional(),
+    dropoffLocation: z.enum(LOCATIONS).optional(),
     pickupDate: z.coerce.date(),
     returnDate: z.coerce.date(),
   })
