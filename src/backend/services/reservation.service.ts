@@ -1,5 +1,9 @@
 import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
+import {
+  promoCodeRepository,
+  toPromotion,
+} from "@/backend/repositories/promo-code.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { toReservation, toReservationWithCar } from "@/backend/lib/serialize";
 import { buildBookingConfirmation } from "@/backend/lib/email/booking-confirmation";
@@ -14,12 +18,20 @@ export async function createReservation(rawInput: unknown) {
   const car = await carRepository.findById(input.carId);
   if (!car) throw new Error("Car not found");
 
+  /* The database decides what a code is worth, not the list compiled into
+   * the bundle — so retiring or expiring a code takes effect immediately.
+   * An unknown or lapsed code quotes as no discount rather than failing:
+   * the renter sees the undiscounted total before confirming. */
+  const promoRow = input.promoCode
+    ? await promoCodeRepository.findUsableByCode(input.promoCode)
+    : null;
+
   const quote = quoteRental({
     pricePerDay: car.pricePerDay,
     pickupAt: input.pickupDate,
     returnAt: input.returnDate,
     driverAge: input.driverAge,
-    promoCode: input.promoCode,
+    promotion: promoRow ? toPromotion(promoRow) : null,
   });
 
   const overlaps = await reservationRepository.hasOverlap(
@@ -52,6 +64,10 @@ export async function createReservation(rawInput: unknown) {
     youngDriverFee: quote.youngDriverFee,
     discount: quote.discount,
     totalPrice: quote.total,
+    /* Linked only when the promotion actually discounted this booking —
+     * minDays can zero it out — so the redemption count and the bookings
+     * that consumed it always agree. */
+    promoCodeId: quote.promotion && promoRow ? promoRow.id : null,
   });
 
   /* Sent after the booking is committed, and deliberately not inside the

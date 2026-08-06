@@ -7,7 +7,13 @@ export interface QuoteInput {
   pickupAt: Date;
   returnAt: Date;
   driverAge: number;
+  /** Looked up in the static list — the browser's instant-feedback path. */
   promoCode?: string | null;
+  /** An already-resolved promotion (from the promo_codes table). Takes
+   *  precedence over promoCode; pass null to mean "no promotion", not even
+   *  a static-list match. The server quotes this way, so what it charges is
+   *  what the database says, not what the bundle shipped with. */
+  promotion?: Promotion | null;
 }
 
 export interface Quote {
@@ -43,14 +49,24 @@ export function quoteRental({
   returnAt,
   driverAge,
   promoCode,
+  promotion: resolved,
 }: QuoteInput): Quote {
   const days = billableDays(pickupAt, returnAt);
   const baseTotal = roundMoney(days * pricePerDay);
   const youngDriverFee = isYoungDriver(driverAge) ? days * YOUNG_DRIVER_FEE_PER_DAY : 0;
 
   // Discounts come off the rental charge only; surcharges are not discountable.
-  const status = evaluatePromoCode(promoCode ?? "", days);
-  const promotion = status.kind === "applied" ? status.promotion : null;
+  // A resolved promotion still honours its minimum length; undefined falls
+  // back to the static list, null means none at all.
+  const promotion =
+    resolved !== undefined
+      ? resolved && (resolved.minDays == null || days >= resolved.minDays)
+        ? resolved
+        : null
+      : (() => {
+          const status = evaluatePromoCode(promoCode ?? "", days);
+          return status.kind === "applied" ? status.promotion : null;
+        })();
   const discount = promotion
     ? roundMoney(
         promotion.percentOff != null

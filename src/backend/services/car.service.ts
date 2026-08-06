@@ -1,5 +1,9 @@
 import "server-only";
 import { carRepository } from "@/backend/repositories/car.repository";
+import {
+  promoCodeRepository,
+  toPromotion,
+} from "@/backend/repositories/promo-code.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { toCar } from "@/backend/lib/serialize";
 import {
@@ -116,7 +120,14 @@ export async function searchAvailableCars(
     };
   }
 
-  const booked = await reservationRepository.findBookedCarIds(pickupAt, returnAt);
+  const [booked, promoRow] = await Promise.all([
+    reservationRepository.findBookedCarIds(pickupAt, returnAt),
+    // Resolved from the database once for the whole page, so the totals shown
+    // here are the totals booking will actually charge — a retired code
+    // quotes as no discount instead of promising one the booking would refuse.
+    search.promoCode ? promoCodeRepository.findUsableByCode(search.promoCode) : null,
+  ]);
+  const promotion = promoRow ? toPromotion(promoRow) : null;
 
   const [{ cars, total: available }, matched] = await Promise.all([
     carRepository.findPage(search.filters, { sort, page, pageSize, excludeIds: booked }),
@@ -135,7 +146,7 @@ export async function searchAvailableCars(
         pickupAt,
         returnAt,
         driverAge: search.driverAge,
-        promoCode: search.promoCode,
+        promotion,
       }),
     };
   });
