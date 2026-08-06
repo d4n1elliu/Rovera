@@ -23,14 +23,18 @@ import type { UserRole } from "@/shared/constants";
 /**
  * Where an unauthenticated visitor is sent.
  *
- * NextAuth's own page for now, so this works before any UI exists. Point it
- * at "/signin" and set `pages.signIn` below once the app has its own form —
- * one constant, so middleware and every server component follow.
+ * One constant, so middleware and every server component agree without each
+ * hardcoding a path.
  */
-export const SIGN_IN_PATH = "/api/auth/signin";
+export const SIGN_IN_PATH = "/signin";
 
 export default {
   session: { strategy: "jwt" },
+
+  pages: {
+    // The app's own form, rather than the one NextAuth generates.
+    signIn: SIGN_IN_PATH,
+  },
 
   // Filled in by auth.ts. Middleware only reads an existing session, so it
   // never needs a provider to do its job.
