@@ -14,10 +14,12 @@ export const metadata: Metadata = { title: "Booking confirmed" };
 export default function ConfirmationPage({
   searchParams,
 }: {
-  searchParams: { ref?: string; emailed?: string };
+  searchParams: { ref?: string; emailed?: string; paid?: string };
 }) {
   const reference = searchParams.ref;
   const emailed = searchParams.emailed === "1";
+  // Display-only hint from Stripe's return URL; the webhook is the record.
+  const paid = searchParams.paid === "1";
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center">
@@ -39,6 +41,10 @@ export default function ConfirmationPage({
         <p className="text-gray-500">
           Your booking is saved. You can find it under your rentals.
         </p>
+      )}
+
+      {paid && (
+        <p className="font-medium text-emerald-700">Payment received — you&apos;re all set.</p>
       )}
 
       {emailed && (

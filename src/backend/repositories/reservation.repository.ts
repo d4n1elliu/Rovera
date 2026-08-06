@@ -115,6 +115,20 @@ export const reservationRepository = {
     });
   },
 
+  /** A booking by its RVR- reference, with its car — the reference is the
+   *  renter's proof of booking, so it also gates the checkout page. */
+  async findByReference(
+    reference: string
+  ): Promise<{ reservation: ReservationRow; car: CarRow } | null> {
+    const [row] = await getDb()
+      .select({ reservation: reservations, car: cars })
+      .from(reservations)
+      .innerJoin(cars, eq(cars.id, reservations.carId))
+      .where(eq(reservations.reference, reference.trim().toUpperCase()))
+      .limit(1);
+    return row ?? null;
+  },
+
   /** A renter's bookings, newest first, each with its car joined in. */
   async findByUserEmail(
     email: string

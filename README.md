@@ -91,6 +91,26 @@ Resend only delivers to arbitrary recipients from a **verified domain**. Its
 sandbox sender works immediately but reaches only the address that owns the
 API key — enough to watch the flow end to end before a domain exists.
 
+### Payments
+
+Card payment via Stripe Checkout (hosted page), taken after booking.
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `STRIPE_SECRET_KEY` | to take payment | Stripe secret key (`sk_test_…` in test mode) |
+| `STRIPE_WEBHOOK_SECRET` | to confirm bookings | Signing secret for the `/api/webhooks/stripe` endpoint |
+
+Without keys the flow degrades: checkout shows the price breakdown with a
+"pay at pickup" note and bookings stay `pending`. With keys, paying moves the
+payment to `succeeded` and the reservation to `confirmed` — driven by the
+signed webhook, never by the browser's return URL. Amounts always come from
+the reservation row, so the client cannot change what is charged.
+
+In the Stripe dashboard add a webhook endpoint for
+`checkout.session.completed` and `checkout.session.expired` pointing at
+`https://<site>/api/webhooks/stripe`. Test cards: `4242 4242 4242 4242`, any
+future expiry, any CVC.
+
 ## Architecture
 
 ```
