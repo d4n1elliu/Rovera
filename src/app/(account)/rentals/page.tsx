@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, SIGN_IN_PATH } from "@/auth";
 import { getRentalHistory } from "@/backend/services/reservation.service";
+import { CancelBookingButton } from "@/frontend/components/features/reservations/cancel-booking-button";
 import { formatDate, formatPrice } from "@/shared/utils";
 
 export const metadata: Metadata = { title: "My rentals" };
@@ -42,6 +43,16 @@ export default async function RentalsPage() {
                   <p className="text-sm capitalize text-gray-500">{rental.status}</p>
                 </div>
               </div>
+              {/* Confirmed means paid here — only the payment webhook confirms. */}
+              {(rental.status === "pending" || rental.status === "confirmed") &&
+                new Date(rental.pickupAt).getTime() > Date.now() && (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <CancelBookingButton
+                      reservationId={rental.id}
+                      paid={rental.status === "confirmed"}
+                    />
+                  </div>
+                )}
             </li>
           ))}
         </ul>

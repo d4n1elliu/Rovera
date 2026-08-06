@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/backend/db/client";
 import { payments, reservations, type PaymentRow } from "@/backend/db/schema";
 
@@ -72,6 +72,15 @@ export const paymentRepository = {
         );
       return true;
     });
+  },
+
+  /** Records a completed refund of the full charge. */
+  async markRefunded(paymentId: string): Promise<void> {
+    const now = new Date();
+    await getDb()
+      .update(payments)
+      .set({ status: "refunded", refundedAmount: sql`${payments.amount}`, updatedAt: now })
+      .where(and(eq(payments.id, paymentId), eq(payments.status, "succeeded")));
   },
 
   /** Records a failed or expired session so support can see why. */
