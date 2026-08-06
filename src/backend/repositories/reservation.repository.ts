@@ -10,6 +10,7 @@ import {
 } from "@/backend/db/schema";
 import { normalizeEmail } from "@/backend/lib/email";
 import { generateBookingReference } from "@/backend/lib/reference";
+import { redeemPromoCode } from "@/backend/repositories/promo-code.repository";
 import { BLOCKING_RESERVATION_STATUSES, DEFAULT_CURRENCY } from "@/shared/constants";
 
 interface CreateReservationData {
@@ -75,6 +76,15 @@ export const reservationRepository = {
         .returning();
 
       if (!user) throw new Error("Could not resolve the renter's account");
+
+      /* Redeemed inside this transaction, so the count and the booking that
+       * consumed it commit or roll back together. */
+      if (data.promoCodeId) {
+        const redeemed = await redeemPromoCode(tx, data.promoCodeId);
+        if (!redeemed) {
+          throw new Error("That promo code is no longer available");
+        }
+      }
 
       const [reservation] = await tx
         .insert(reservations)
