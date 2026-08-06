@@ -29,7 +29,9 @@ export function BareSelect({
   className,
 }: BareSelectProps) {
   return (
-    <span className={cn("relative block min-w-0", className)}>
+    // Flex-centred so the fixed-height select sits mid-box when a caller
+    // gives the wrapper a height (the reservation form's h-10 fields).
+    <span className={cn("relative flex min-w-0 items-center", className)}>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
