@@ -253,4 +253,4 @@ data. Run `npm run db:seed` by hand against an environment that wants it.
 
 ## Link
 
-| https://rovera1.vercel.app/ |
+https://rovera1.vercel.app/
