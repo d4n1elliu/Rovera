@@ -1,6 +1,7 @@
 import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import authConfig from "@/auth.config";
+import { clientIpFrom, rateLimit } from "@/backend/lib/rate-limit";
 import { userRepository } from "@/backend/repositories/user.repository";
 import { verifyPassword } from "@/backend/lib/auth/password";
 import { credentialsSchema } from "@/shared/schemas/auth.schema";
@@ -58,7 +59,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
 
-      async authorize(raw) {
+      async authorize(raw, request) {
+        // Throttled by IP before any hashing: sign-in is the brute-force surface.
+        const verdict = await rateLimit("signin", clientIpFrom(request.headers), {
+          limit: 10,
+          windowSeconds: 600,
+        });
+        if (!verdict.allowed) return null;
+
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
 import { auth } from "@/auth";
+import { clientIpFrom, rateLimit, tooManyRequests } from "@/backend/lib/rate-limit";
 import { createReservation, getRentalHistory } from "@/backend/services/reservation.service";
 
 export const runtime = "nodejs";
@@ -12,6 +13,14 @@ export const runtime = "nodejs";
  * that same row rather than creating a second one. Requiring a session here
  * would remove the ability to book as a guest. */
 export async function POST(request: NextRequest) {
+  // Bookings write reservations AND upsert users, so the window is generous
+  // for a renter but a wall for a script.
+  const verdict = await rateLimit("book", clientIpFrom(request.headers), {
+    limit: 10,
+    windowSeconds: 3600,
+  });
+  if (!verdict.allowed) return tooManyRequests(verdict.retryAfterSeconds);
+
   try {
     const body = await request.json();
     const reservation = await createReservation(body);
