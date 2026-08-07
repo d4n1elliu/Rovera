@@ -32,21 +32,20 @@ degrades gracefully when absent.
 
 ## Environment variables
 
-| Variable | Required | Without it |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | — (use the **pooler**, port 6543; direct 5432 is IPv6-only and exhausts connections) |
-| `AUTH_SECRET` | yes | auth endpoints 500 (`npx auth secret` to generate) |
-| `STRIPE_SECRET_KEY` | for payments | checkout shows "pay at pickup", bookings stay `pending` |
-| `STRIPE_WEBHOOK_SECRET` | for payments | webhook rejects; bookings never confirm |
-| `RESEND_API_KEY` | for emails | send skipped, booking unaffected |
-| `EMAIL_FROM` | no | falls back to Resend's sandbox sender (delivers only to the account owner) |
-| `NEXT_PUBLIC_SITE_URL` | no | email/Stripe links fall back to `VERCEL_URL` |
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Supabase **pooler** string, port 6543 (required) |
+| `AUTH_SECRET` | signs sessions — `npx auth secret` (required) |
+| `STRIPE_SECRET_KEY` | payments |
+| `STRIPE_WEBHOOK_SECRET` | webhook that confirms bookings |
+| `RESEND_API_KEY` | confirmation emails |
+| `EMAIL_FROM` | sender, e.g. `Rovera <bookings@rovera.org>` |
+| `NEXT_PUBLIC_SITE_URL` | absolute links in emails and Stripe returns |
 
-Local scripts load `.env.local` then `.env` (Next.js precedence) via
-`scripts/with-env.mjs`, so migrations, the seed and the app always target the
-same database. Stripe needs a webhook endpoint for `checkout.session.completed`
-and `checkout.session.expired` at `https://<site>/api/webhooks/stripe`; Resend
-needs the domain verified. Test card: `4242 4242 4242 4242`.
+Missing optional keys degrade gracefully (unpaid bookings stay `pending`,
+emails are skipped). Stripe wants a webhook for `checkout.session.completed`
+and `.expired` at `/api/webhooks/stripe`; Resend wants the domain verified.
+Test card: `4242 4242 4242 4242`.
 
 ## Architecture
 
