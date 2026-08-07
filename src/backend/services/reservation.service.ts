@@ -129,5 +129,7 @@ export async function cancelReservation(
 
 export async function getRentalHistory(email: string) {
   const history = await reservationRepository.findByUserEmail(email);
-  return history.map(({ reservation, car }) => toReservationWithCar(reservation, car));
+  return history.map(({ reservation, car, reviewRating }) =>
+    toReservationWithCar(reservation, car, reviewRating)
+  );
 }

@@ -4,6 +4,7 @@ import { getDb } from "@/backend/db/client";
 import {
   cars,
   reservations,
+  reviews,
   users,
   type CarRow,
   type ReservationRow,
@@ -132,16 +133,14 @@ export const reservationRepository = {
   /** A renter's bookings, newest first, each with its car joined in. */
   async findByUserEmail(
     email: string
-  ): Promise<{ reservation: ReservationRow; car: CarRow }[]> {
-    /* Resolved in one query rather than fetching the renter, their bookings
-     * and those bookings' cars separately. The join is inner because a
-     * reservation's car is a foreign key that cannot dangle, so there is no
-     * missing-car case to defend against. */
+  ): Promise<{ reservation: ReservationRow; car: CarRow; reviewRating: number | null }[]> {
+    // One query; the review join is left because most trips have none yet.
     const rows = await getDb()
-      .select({ reservation: reservations, car: cars })
+      .select({ reservation: reservations, car: cars, reviewRating: reviews.rating })
       .from(reservations)
       .innerJoin(users, eq(users.id, reservations.userId))
       .innerJoin(cars, eq(cars.id, reservations.carId))
+      .leftJoin(reviews, eq(reviews.reservationId, reservations.id))
       .where(eq(users.email, normalizeEmail(email)))
       .orderBy(desc(reservations.createdAt));
 

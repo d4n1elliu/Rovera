@@ -85,6 +85,8 @@ export interface Reservation {
 
 export interface ReservationWithCar extends Reservation {
   car: Car;
+  /** The renter's star rating for this trip, once reviewed. */
+  reviewRating: number | null;
 }
 
 export interface CarFilters {
