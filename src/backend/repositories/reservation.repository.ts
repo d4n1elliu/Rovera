@@ -176,4 +176,33 @@ export const reservationRepository = {
 
     return held.map((row) => row.carId);
   },
+
+  /** The renter's own booking, or null — ownership checked in the query. */
+  async findOwned(reservationId: string, userId: string): Promise<ReservationRow | null> {
+    const [row] = await getDb()
+      .select()
+      .from(reservations)
+      .where(and(eq(reservations.id, reservationId), eq(reservations.userId, userId)))
+      .limit(1);
+    return row ?? null;
+  },
+
+  /** Cancels the renter's own upcoming booking. All rules live in the WHERE,
+   *  so a stale page or a raced request matches no row instead of mis-cancelling. */
+  async cancelOwned(reservationId: string, userId: string): Promise<ReservationRow | null> {
+    const now = new Date();
+    const [row] = await getDb()
+      .update(reservations)
+      .set({ status: "cancelled", cancelledAt: now, updatedAt: now })
+      .where(
+        and(
+          eq(reservations.id, reservationId),
+          eq(reservations.userId, userId),
+          inArray(reservations.status, [...BLOCKING_RESERVATION_STATUSES]),
+          gt(reservations.pickupAt, now)
+        )
+      )
+      .returning();
+    return row ?? null;
+  },
 };

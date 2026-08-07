@@ -5,7 +5,9 @@ import {
   promoCodeRepository,
   toPromotion,
 } from "@/backend/repositories/promo-code.repository";
+import { paymentRepository } from "@/backend/repositories/payment.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
+import { refundReservationPayment } from "@/backend/services/payment.service";
 import { toReservation, toReservationWithCar } from "@/backend/lib/serialize";
 import { buildBookingConfirmation } from "@/backend/lib/email/booking-confirmation";
 import { sendEmail } from "@/backend/lib/email/client";
@@ -93,6 +95,37 @@ export async function createReservation(rawInput: unknown) {
 
 /** A created booking, plus whether its confirmation email actually went out. */
 export type CreatedReservation = Reservation & { emailSent: boolean };
+
+export type CancelResult =
+  | { ok: true; refund: "refunded" | "none" }
+  | { ok: false; reason: "not-cancellable" | "refund-failed" };
+
+/** Cancels the signed-in renter's booking, refunding first when money was
+ *  taken — a refund that fails must block the cancellation, never trail it. */
+export async function cancelReservation(
+  reservationId: string,
+  userId: string
+): Promise<CancelResult> {
+  // Eligibility before money moves: refunding a booking that then turns out
+  // non-cancellable would hand the refund out and keep the booking live.
+  const owned = await reservationRepository.findOwned(reservationId, userId);
+  const cancellable =
+    owned &&
+    (owned.status === "pending" || owned.status === "confirmed") &&
+    owned.pickupAt.getTime() > Date.now();
+  if (!cancellable) return { ok: false, reason: "not-cancellable" };
+
+  const payment = await paymentRepository.findForReservation(reservationId);
+  if (payment?.status === "succeeded") {
+    const refund = await refundReservationPayment(reservationId).catch(() => "unavailable" as const);
+    if (refund !== "refunded") return { ok: false, reason: "refund-failed" };
+  }
+
+  const cancelled = await reservationRepository.cancelOwned(reservationId, userId);
+  if (!cancelled) return { ok: false, reason: "not-cancellable" };
+
+  return { ok: true, refund: payment?.status === "succeeded" ? "refunded" : "none" };
+}
 
 export async function getRentalHistory(email: string) {
   const history = await reservationRepository.findByUserEmail(email);

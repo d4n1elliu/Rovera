@@ -54,6 +54,23 @@ export async function startCheckout(reference: string): Promise<CheckoutState | 
   return { state: "ready", url: session.url };
 }
 
+export type RefundOutcome = "refunded" | "nothing-to-refund" | "unavailable";
+
+/** Refunds a reservation's succeeded payment in full via Stripe. */
+export async function refundReservationPayment(reservationId: string): Promise<RefundOutcome> {
+  const payment = await paymentRepository.findForReservation(reservationId);
+  if (!payment || payment.status !== "succeeded") return "nothing-to-refund";
+  if (!isStripeConfigured() || !payment.stripeIntentId) return "unavailable";
+
+  // We store the checkout session id; the refund needs its payment intent.
+  const session = await getStripe().checkout.sessions.retrieve(payment.stripeIntentId);
+  if (typeof session.payment_intent !== "string") return "unavailable";
+
+  await getStripe().refunds.create({ payment_intent: session.payment_intent });
+  await paymentRepository.markRefunded(payment.id);
+  return "refunded";
+}
+
 /** Applies a verified Stripe event. Replays are no-ops because the payment
  *  row only moves out of requires_payment once. */
 export async function handleStripeEvent(event: Stripe.Event): Promise<void> {
