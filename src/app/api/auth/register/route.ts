@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
+import { clientIpFrom, rateLimit, tooManyRequests } from "@/backend/lib/rate-limit";
 import { userRepository } from "@/backend/repositories/user.repository";
 import { registerSchema } from "@/shared/schemas/auth.schema";
 
@@ -7,6 +8,13 @@ export const runtime = "nodejs";
 
 // POST /api/auth/register — create an account, or claim an existing guest one
 export async function POST(request: NextRequest) {
+  // Tight: registration writes rows, burns bcrypt CPU, and probes addresses.
+  const verdict = await rateLimit("register", clientIpFrom(request.headers), {
+    limit: 5,
+    windowSeconds: 600,
+  });
+  if (!verdict.allowed) return tooManyRequests(verdict.retryAfterSeconds);
+
   try {
     const input = registerSchema.parse(await request.json());
     const user = await userRepository.register(input);

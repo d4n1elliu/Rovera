@@ -381,6 +381,14 @@ export const promoCodes = pgTable(
   ]
 ).enableRLS();
 
+/** Fixed-window counters for abuse-prone endpoints, keyed "bucket:ip".
+ *  Ephemeral bookkeeping — losing it merely resets some windows. */
+export const rateLimits = pgTable("rate_limits", {
+  key: text().primaryKey(),
+  windowStart: timestamp({ withTimezone: true }).notNull(),
+  count: integer().notNull(),
+}).enableRLS();
+
 /* ------------------------------ Relations ---------------------------- */
 
 /* Declared so a repository can opt into Drizzle's relational queries
