@@ -1,0 +1,4 @@
+# Machine-written drizzle-kit output: collapsed in PR diffs, skipped by
+# language stats, ignored by review tools. The readable SQL stays visible.
+drizzle/meta/** linguist-generated=true
+package-lock.json linguist-generated=true
