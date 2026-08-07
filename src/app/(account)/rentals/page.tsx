@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, SIGN_IN_PATH } from "@/auth";
 import { getRentalHistory } from "@/backend/services/reservation.service";
 import { CancelBookingButton } from "@/frontend/components/features/reservations/cancel-booking-button";
+import { ReviewForm } from "@/frontend/components/features/reviews/review-form";
 import { formatDate, formatPrice } from "@/shared/utils";
 
 export const metadata: Metadata = { title: "My rentals" };
@@ -53,6 +54,22 @@ export default async function RentalsPage() {
                     />
                   </div>
                 )}
+              {/* Reviewable once the trip has ended; confirmed implies it was never cancelled. */}
+              {(rental.status === "completed" || rental.status === "confirmed") &&
+                new Date(rental.returnAt).getTime() < Date.now() &&
+                (rental.reviewRating != null ? (
+                  <p className="mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600">
+                    Your rating:{" "}
+                    <span className="text-amber-500">
+                      {"★".repeat(rental.reviewRating)}
+                      <span className="text-gray-300">{"★".repeat(5 - rental.reviewRating)}</span>
+                    </span>
+                  </p>
+                ) : (
+                  <div className="mt-3 border-t border-gray-100 pt-3">
+                    <ReviewForm reservationId={rental.id} />
+                  </div>
+                ))}
             </li>
           ))}
         </ul>

@@ -69,7 +69,8 @@ export function toReservation(row: ReservationRow): Reservation {
 /** A reservation with its car joined in, as the rentals list renders it. */
 export function toReservationWithCar(
   row: ReservationRow,
-  car: CarRow
+  car: CarRow,
+  reviewRating: number | null = null
 ): ReservationWithCar {
-  return { ...toReservation(row), car: toCar(car) };
+  return { ...toReservation(row), car: toCar(car), reviewRating };
 }
