@@ -8,17 +8,17 @@ Next.js · TypeScript · PostgreSQL (Supabase) · Drizzle ORM · Tailwind CSS ·
 
 ## Features
 
-- **Fleet search** — filters, sorting, pagination and live availability, all resolved in SQL; booked cars are excluded before the page is cut.
-- **Booking** — hourly windows, pickup/drop-off branch selection, DST-safe day billing, double-booking guard in the database.
-- **Guest checkout that becomes an account** — book with just an email; registering later claims the same record, bookings intact.
-- **Auth** — email/password (NextAuth, JWT sessions, bcrypt), protected account area.
-- **Payments** — Stripe Checkout, amounts always priced server-side; the signed webhook (never the return URL) confirms bookings.
-- **Cancellation with refunds** — renters cancel upcoming bookings; paid bookings are refunded through Stripe first, and a failed refund blocks the cancel.
-- **Trip reviews** — star ratings on finished trips feed the real aggregates the fleet grid sorts by.
-- **Promo codes** — enforced from the database: validity windows, redemption caps counted atomically inside the booking transaction.
-- **Confirmation emails** — via Resend from `bookings@rovera.org`; a failed send never fails a booking, and the UI only claims an email that actually sent.
-- **Rate limiting** — Postgres-backed fixed windows on register, sign-in, booking and checkout; fails open.
-- **Defence in depth** — Supabase's public API is closed by RLS *and* revoked privileges, so one mistake can't expose data.
+- **Fleet search**:  filters, sorting, pagination and live availability, all resolved in SQL; booked cars are excluded before the page is cut.
+- **Booking**: hourly windows, pickup/drop-off branch selection, DST-safe day billing, double-booking guard in the database.
+- **Guest checkout that becomes an account**: book with just an email; registering later claims the same record, bookings intact.
+- **Auth**: email/password (NextAuth, JWT sessions, bcrypt), protected account area.
+- **Payments**: Stripe Checkout, amounts always priced server-side; the signed webhook (never the return URL) confirms bookings.
+- **Cancellation with refunds**: renters cancel upcoming bookings; paid bookings are refunded through Stripe first, and a failed refund blocks the cancel.
+- **Trip reviews**: star ratings on finished trips feed the real aggregates the fleet grid sorts by.
+- **Promo codes**: enforced from the database: validity windows, redemption caps counted atomically inside the booking transaction.
+- **Confirmation emails**: via Resend from `bookings@rovera.org`; a failed send never fails a booking, and the UI only claims an email that actually sent.
+- **Rate limiting**: Postgres-backed fixed windows on register, sign-in, booking and checkout; fails open.
+- **Defence in depth**: Supabase's public API is closed by RLS *and* revoked privileges, so one mistake can't expose data.
 
 ## Quick start
 
@@ -78,7 +78,7 @@ table, remember `.enableRLS()` so both layers hold.
 
 ## Deployment (Vercel)
 
-`vercel-build = npm run db:migrate && next build` — deploys apply pending
+`vercel-build = npm run db:migrate && next build` deploys apply pending
 migrations first, so a broken migration fails the build instead of shipping
 mismatched code. `DATABASE_URL` is needed at build time; set every variable
 for Production *and* Preview, and redeploy after changing any (they only take
