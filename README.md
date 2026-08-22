@@ -94,3 +94,7 @@ effect on the next deployment).
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:seed` | Seed reference data + demo bookings (idempotent) |
 | `npm run db:reset` | Truncate everything, then seed fresh |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
