@@ -97,4 +97,6 @@ effect on the next deployment).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Licensed under the **MIT License** — see [LICENSE](LICENSE). You're free to use,
+modify and distribute this project, including commercially, as long as the
+copyright notice and licence text are included.
