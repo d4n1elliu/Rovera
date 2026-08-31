@@ -76,7 +76,7 @@ refunds never exceeding the charge) rather than trusting the application.
 tables. The app connects as `postgres`, which bypasses both. When adding a
 table, remember `.enableRLS()` so both layers hold.
 
-## Deployment (Vercel)
+## Deployment
 
 `vercel-build = npm run db:migrate && next build` deploys apply pending
 migrations first, so a broken migration fails the build instead of shipping
