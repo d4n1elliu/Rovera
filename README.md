@@ -1,6 +1,6 @@
 # Rovera
 
-Full-stack car rental platform. **Live at [www.rovera.org](https://www.rovera.org)**
+**Live at [www.rovera.org](https://www.rovera.org)**
 
 ## Tech Stack 
 
