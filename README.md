@@ -1,6 +1,6 @@
 # Rovera
 
-**Live at [www.rovera.org](https://www.rovera.org)**
+A car rental website. **Live at [www.rovera.org](https://www.rovera.org)**
 
 ## Tech Stack 
 
