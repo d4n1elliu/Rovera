@@ -61,6 +61,12 @@ export async function getCarById(id: string) {
   return toCar(car);
 }
 
+/** Car ids and last-modified dates for the sitemap. */
+export async function getSitemapCars(): Promise<{ id: string; updatedAt: Date }[]> {
+  const rows = await carRepository.findMany();
+  return rows.map((row) => ({ id: row.id, updatedAt: row.updatedAt }));
+}
+
 export async function searchCars(query: string) {
   if (!query.trim()) return [];
   const filters: CarFiltersInput = carFiltersSchema.parse({ query });
