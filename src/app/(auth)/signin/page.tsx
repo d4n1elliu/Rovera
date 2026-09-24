@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { SignInForm } from "@/frontend/components/features/auth/sign-in-form";
+import { pageMetadata } from "@/frontend/config/seo";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata = pageMetadata({
+  title: "Sign in",
+  description:
+    "Sign in to your Rovera account to view upcoming rentals, manage or cancel your bookings and leave a review after each trip.",
+  path: "/signin",
+  noindex: true,
+});
 
 // Depends on whether the visitor already has a session.
 export const dynamic = "force-dynamic";

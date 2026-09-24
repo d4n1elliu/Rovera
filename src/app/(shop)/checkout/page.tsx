@@ -1,13 +1,18 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isStripeConfigured } from "@/backend/lib/payments/stripe";
 import { paymentRepository } from "@/backend/repositories/payment.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { PayButton } from "@/frontend/components/features/checkout/pay-button";
+import { pageMetadata } from "@/frontend/config/seo";
 import { formatDateTime, formatPrice } from "@/shared/utils";
 
-export const metadata: Metadata = { title: "Checkout" };
+export const metadata = pageMetadata({
+  title: "Checkout",
+  description: "Pay for your Rovera booking.",
+  path: "/checkout",
+  noindex: true,
+});
 export const dynamic = "force-dynamic";
 
 /* Reached after booking with the RVR- reference — the renter's proof of

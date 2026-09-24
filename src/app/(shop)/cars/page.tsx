@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { searchAvailableCars } from "@/backend/services/car.service";
+import { pageMetadata } from "@/frontend/config/seo";
 import { CarGrid } from "@/frontend/components/features/cars/car-grid";
 import { PaginationNav } from "@/frontend/components/features/cars/pagination-nav";
 import { SearchBar } from "@/frontend/components/features/cars/search-bar";
@@ -12,7 +12,12 @@ import { PAGE_PARAM, queryWithout } from "@/shared/lib/query";
 import { toDateInput } from "@/shared/lib/datetime";
 import type { Quote } from "@/shared/lib/pricing";
 
-export const metadata: Metadata = { title: "Browse cars" };
+export const metadata = pageMetadata({
+  title: "Browse cars",
+  description:
+    "Search the Rovera fleet of sedans, SUVs, vans and more. Filter by body type, fuel and price, check live availability and book in minutes.",
+  path: "/cars",
+});
 
 // Rendered per-request: results depend on live reservations for the searched
 // window, so nothing here can be cached ahead of time.

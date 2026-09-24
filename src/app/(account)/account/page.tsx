@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, SIGN_IN_PATH } from "@/auth";
 import { Input } from "@/frontend/components/ui/input";
+import { pageMetadata } from "@/frontend/config/seo";
 
-export const metadata: Metadata = { title: "My account" };
+export const metadata = pageMetadata({
+  title: "My account",
+  description: "Your Rovera account details.",
+  path: "/account",
+  noindex: true,
+});
 
 // Reflects the signed-in renter, so it cannot be prerendered.
 export const dynamic = "force-dynamic";

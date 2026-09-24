@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { SignUpForm } from "@/frontend/components/features/auth/sign-up-form";
+import { pageMetadata } from "@/frontend/config/seo";
 
-export const metadata: Metadata = { title: "Create account" };
+export const metadata = pageMetadata({
+  title: "Create account",
+  description:
+    "Create a free Rovera account to book rental cars in minutes, keep track of your rentals and manage bookings in one place.",
+  path: "/signup",
+  noindex: true,
+});
 
 export const dynamic = "force-dynamic";
 
