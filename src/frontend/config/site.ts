@@ -8,13 +8,28 @@ export const siteConfig = {
   description: "Rent the right car for every journey.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL,
   tagline: "Car rental without the counter.",
+  // Rovera is a portfolio project; this copy is shown wherever that must be clear.
+  portfolio: {
+    author: "Daniel Liu",
+    notice:
+      "Rovera is a portfolio project by Daniel Liu. Bookings are simulated and no vehicles are provided.",
+    sourceUrl: "https://github.com/d4n1elliu/Rovera",
+    testCard: "4242 4242 4242 4242",
+  },
   // Copy for search results and link previews, separate from the UI strings.
   seo: {
-    title: "Rovera | Car rental, booked in minutes",
-    tagline: "Car rental, booked in minutes.",
+    title: "Rovera | Car rental demo (portfolio project)",
+    tagline: "Car rental, booked in minutes — a portfolio project",
     description:
-      "Browse, compare and book rental cars in a single flow. Real-time availability, transparent pricing and instant confirmation.",
-    keywords: ["car rental", "car hire", "rental cars", "book a car", "Sydney car rental"],
+      "A full-stack car rental booking demo built with Next.js, Stripe and Supabase. Portfolio project by Daniel Liu — not a real rental service.",
+    keywords: [
+      "car rental demo",
+      "portfolio project",
+      "Next.js demo",
+      "full-stack demo",
+      "Stripe test mode",
+      "Supabase",
+    ],
     author: "Daniel Liu",
     locale: "en_AU",
     themeColor: "#0a1730",

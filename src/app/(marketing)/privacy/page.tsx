@@ -1,9 +1,10 @@
+import { DemoNotice } from "@/frontend/components/layout/demo-notice";
 import { pageMetadata } from "@/frontend/config/seo";
 
 export const metadata = pageMetadata({
   title: "Privacy Policy",
   description:
-    "How Rovera collects, uses and protects your personal information when you browse the site, make a booking or contact support.",
+    "Privacy policy for the Rovera demo, a portfolio project. Bookings are simulated; only the account and demo booking details you enter are stored.",
   path: "/privacy",
 });
 
@@ -42,13 +43,14 @@ const sections = [
   },
   {
     heading: "9. Contact us",
-    body: "For privacy questions or requests, contact our support team via the Help Centre. Our team is available 24/7.",
+    body: "This demo has no support team. For questions about the data it stores, open an issue on the GitHub repository linked in the footer.",
   },
 ];
 
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <DemoNotice />
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Privacy Policy</h1>
         <p className="text-sm text-gray-500">Last updated: 25 July 2026</p>

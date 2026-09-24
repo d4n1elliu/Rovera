@@ -35,7 +35,7 @@ export function CarCard({
           priority={priority}
         />
         <span className="absolute left-3 top-3 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-          Free cancellation
+          Free cancellation (demo)
         </span>
       </div>
 

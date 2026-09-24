@@ -7,7 +7,7 @@ import { pageMetadata } from "@/frontend/config/seo";
 export const metadata = pageMetadata({
   title: "Create account",
   description:
-    "Create a free Rovera account to book rental cars in minutes, keep track of your rentals and manage bookings in one place.",
+    "Create an account on the Rovera demo to try the simulated booking flow end to end. Portfolio project, not a real rental service.",
   path: "/signup",
   noindex: true,
 });

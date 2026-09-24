@@ -8,7 +8,7 @@ import { formatDate, formatPrice } from "@/shared/utils";
 
 export const metadata = pageMetadata({
   title: "My rentals",
-  description: "Your upcoming and past Rovera rentals.",
+  description: "Your simulated rentals on the Rovera demo, a portfolio project.",
   path: "/rentals",
   noindex: true,
 });

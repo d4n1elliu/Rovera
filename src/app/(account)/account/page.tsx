@@ -6,7 +6,7 @@ import { pageMetadata } from "@/frontend/config/seo";
 
 export const metadata = pageMetadata({
   title: "My account",
-  description: "Your Rovera account details.",
+  description: "Your account on the Rovera demo, a portfolio project.",
   path: "/account",
   noindex: true,
 });

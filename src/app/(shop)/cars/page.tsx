@@ -15,7 +15,7 @@ import type { Quote } from "@/shared/lib/pricing";
 export const metadata = pageMetadata({
   title: "Browse cars",
   description:
-    "Search the Rovera fleet of sedans, SUVs, vans and more. Filter by body type, fuel and price, check live availability and book in minutes.",
+    "Browse the demo fleet and try the booking flow: filter by body type, fuel and price, then reserve with a Stripe test card. Portfolio project, no real rentals.",
   path: "/cars",
 });
 

@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { TestModeNotice } from "@/frontend/components/features/checkout/test-mode-notice";
 import { pageMetadata } from "@/frontend/config/seo";
 
 export const metadata = pageMetadata({
   title: "Booking confirmed",
-  description: "Your Rovera booking is confirmed.",
+  description: "Simulated booking confirmation on the Rovera demo. No vehicle is provided and no real charge is made.",
   path: "/confirmation",
   noindex: true,
 });
@@ -32,6 +33,10 @@ export default function ConfirmationPage({
         ✓
       </div>
       <h1 className="text-3xl font-bold">Booking confirmed!</h1>
+
+      <TestModeNotice>
+        Test mode — this booking is simulated. No real charge was made and no vehicle is provided.
+      </TestModeNotice>
 
       {reference ? (
         <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">

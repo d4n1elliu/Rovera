@@ -1,10 +1,11 @@
+import { DemoNotice } from "@/frontend/components/layout/demo-notice";
 import { pageMetadata } from "@/frontend/config/seo";
 import { MIN_DRIVER_AGE, YOUNG_DRIVER_AGE } from "@/shared/constants";
 
 export const metadata = pageMetadata({
   title: "Terms of Use",
   description:
-    "The terms that govern bookings on Rovera, including driver eligibility, payment, cancellations, permitted vehicle use and liability.",
+    "Terms of Use for the Rovera demo, a portfolio project. The service is fictional and bookings are simulated; this shows how a real rental site's terms would read.",
   path: "/terms",
 });
 
@@ -19,7 +20,7 @@ const sections = [
   },
   {
     heading: "3. Bookings and payment",
-    body: "A booking is confirmed once payment is authorised and you receive a confirmation email. Prices are shown in Australian dollars (AUD) and include basic insurance coverage. Optional extras, tolls, and fuel are charged separately.",
+    body: "A booking is confirmed once payment is authorised and you receive a confirmation email. Prices are shown in Australian dollars (AUD) and, in this demo scenario, include modelled basic insurance coverage. Optional extras, tolls, and fuel are charged separately. Payments run in Stripe test mode and nothing is actually charged.",
   },
   {
     heading: "4. Cancellations and changes",
@@ -31,7 +32,7 @@ const sections = [
   },
   {
     heading: "6. Insurance and liability",
-    body: "Every rental includes basic damage cover subject to an excess. You are responsible for the excess amount in the event of damage or theft unless you purchase excess reduction at checkout. Damage arising from a breach of these terms is not covered.",
+    body: "In the scenario this demo models, every rental includes basic damage cover subject to an excess, and the renter is responsible for the excess unless they purchase excess reduction at checkout. No real insurance is provided because no real vehicles are.",
   },
   {
     heading: "7. Fuel and returns",
@@ -47,13 +48,14 @@ const sections = [
   },
   {
     heading: "10. Contact",
-    body: "Questions about these terms? Visit our Help Centre or contact our support team, available 24/7.",
+    body: "This demo has no support team. Questions about the project belong in the GitHub repository; the Help Centre explains what the demo does and does not do.",
   },
 ];
 
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+      <DemoNotice />
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Terms of Use</h1>
         <p className="text-sm text-gray-500">Last updated: 25 July 2026</p>
