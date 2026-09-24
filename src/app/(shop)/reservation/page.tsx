@@ -6,7 +6,7 @@ import { formatPrice } from "@/shared/utils";
 
 export const metadata = pageMetadata({
   title: "Reservation",
-  description: "Choose your dates and reserve this car on Rovera.",
+  description: "Reserve a car in the Rovera demo booking flow. Portfolio project, bookings are simulated.",
   path: "/reservation",
   noindex: true,
 });

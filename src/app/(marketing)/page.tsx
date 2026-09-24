@@ -62,6 +62,7 @@ export default async function HomePage({
               {heroContent.headline[1]}
             </h1>
             <p className="mt-5 text-lg text-blue-100">{heroContent.subline}</p>
+            <p className="mt-3 text-sm text-blue-200">{heroContent.demoNote}</p>
           </div>
 
           <div className="absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 text-center">

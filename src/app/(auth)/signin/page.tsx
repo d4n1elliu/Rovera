@@ -7,7 +7,7 @@ import { pageMetadata } from "@/frontend/config/seo";
 export const metadata = pageMetadata({
   title: "Sign in",
   description:
-    "Sign in to your Rovera account to view upcoming rentals, manage or cancel your bookings and leave a review after each trip.",
+    "Sign in to the Rovera demo to view and cancel simulated bookings. Portfolio project, not a real rental service.",
   path: "/signin",
   noindex: true,
 });

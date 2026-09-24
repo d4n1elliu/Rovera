@@ -6,6 +6,7 @@ export const FLEET_SECTION_ID = "fleet";
 export const heroContent = {
   headline: ["Drive the future", "with Rovera."],
   subline: "No counters. No hidden fees.",
+  demoNote: "A full-stack car rental booking demo built to showcase Next.js, Stripe and Supabase.",
   cta: { label: "Book a car", href: `#${FLEET_SECTION_ID}` },
 } as const;
 
@@ -16,7 +17,7 @@ export const HERO_AUTOPLAY_MS = 7000;
 export const aboutContent = {
   eyebrow: "Renting made simple",
   heading: `We are ${siteConfig.name}`,
-  body: "Book online, pick up in five Australian cities, and drive. Insurance, free cancellation, and 24/7 support included.",
+  body: "This demo models a rental service: book online, pick up in one of five fictional Australian branches, and drive. Insurance, free cancellation and 24/7 support are part of the scenario, not real offers.",
   cta: { label: "Read more", href: "/help" },
   image: {
     src: "/car_images/2022-Tesla-Model-3-Electric.png",
@@ -31,15 +32,16 @@ export const fleetContent = {
   heading: "Available cars",
 } as const;
 
+// Sample figures for the demo, not real usage.
 export const stats = [
-  { value: siteConfig.socialProof.clients, label: "happy clients" },
-  { value: `${siteConfig.socialProof.rating} ★`, label: "average rating" },
-  { value: String(siteConfig.locations.length), label: "cities served" },
-  { value: "24/7", label: "roadside support" },
+  { value: siteConfig.socialProof.clients, label: "sample clients" },
+  { value: `${siteConfig.socialProof.rating} ★`, label: "sample rating" },
+  { value: String(siteConfig.locations.length), label: "demo cities" },
+  { value: "24/7", label: "support (modelled)" },
 ] as const;
 
 export const testimonialsContent = {
-  eyebrow: "What clients say",
+  eyebrow: "Sample reviews (fictional)",
   heading: "Trusted on every trip",
   items: [
     {

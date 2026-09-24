@@ -14,6 +14,17 @@ export function Footer() {
               <span className="text-2xl">{siteConfig.name}</span>
             </div>
             <p className="text-sm">{siteConfig.tagline}</p>
+            <p className="text-xs text-blue-300">
+              {siteConfig.portfolio.notice}{" "}
+              <a
+                href={siteConfig.portfolio.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                View source
+              </a>
+            </p>
           </div>
 
           {siteConfig.footerColumns.map((column) => (

@@ -17,7 +17,7 @@ export const OG_IMAGE = {
   url: "/opengraph-image",
   width: 1200,
   height: 630,
-  alt: "Rovera – car rental, booked in minutes",
+  alt: "Rovera — car rental booking demo, a portfolio project by Daniel Liu",
 };
 
 // Every page re-declares openGraph/twitter: Next replaces rather than merges
@@ -30,7 +30,7 @@ export function pageMetadata({ title, description, path, noindex = false }: Page
     robots: noindex ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
       type: "website",
-      siteName: siteConfig.name,
+      siteName: `${siteConfig.name} — portfolio project`,
       locale: siteConfig.seo.locale,
       url: path,
       images: [OG_IMAGE],

@@ -1,7 +1,7 @@
 {
-  "name": "Rovera",
+  "name": "Rovera — car rental demo",
   "short_name": "Rovera",
-  "description": "Browse, compare and book rental cars in a single flow.",
+  "description": "A full-stack car rental booking demo built with Next.js, Stripe and Supabase. Portfolio project by Daniel Liu — not a real rental service.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a1730",

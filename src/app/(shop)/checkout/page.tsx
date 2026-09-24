@@ -4,12 +4,13 @@ import { isStripeConfigured } from "@/backend/lib/payments/stripe";
 import { paymentRepository } from "@/backend/repositories/payment.repository";
 import { reservationRepository } from "@/backend/repositories/reservation.repository";
 import { PayButton } from "@/frontend/components/features/checkout/pay-button";
+import { TestModeNotice } from "@/frontend/components/features/checkout/test-mode-notice";
 import { pageMetadata } from "@/frontend/config/seo";
 import { formatDateTime, formatPrice } from "@/shared/utils";
 
 export const metadata = pageMetadata({
   title: "Checkout",
-  description: "Pay for your Rovera booking.",
+  description: "Simulated checkout on the Rovera demo using Stripe test mode. No real charge is made.",
   path: "/checkout",
   noindex: true,
 });
@@ -71,6 +72,7 @@ export default async function CheckoutPage({
         </p>
       ) : isStripeConfigured() ? (
         <div className="space-y-3">
+          <TestModeNotice />
           <PayButton reference={reservation.reference} />
           <p className="text-center text-xs text-gray-500">
             Secure payment via Stripe. You&apos;ll be brought back here afterwards.
@@ -78,8 +80,8 @@ export default async function CheckoutPage({
         </div>
       ) : (
         <p className="text-sm text-gray-600">
-          Online payment isn&apos;t available yet — your booking is recorded and you can
-          pay at pickup.{" "}
+          Online payment isn&apos;t enabled in this environment — your simulated booking is
+          recorded anyway.{" "}
           <Link href={confirmationHref} className="text-brand underline underline-offset-4">
             Continue to confirmation
           </Link>

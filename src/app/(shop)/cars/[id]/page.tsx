@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCarById } from "@/backend/services/car.service";
 import { pageMetadata } from "@/frontend/config/seo";
-import { siteConfig } from "@/frontend/config/site";
 import { formatPrice } from "@/shared/utils";
 import type { Car } from "@/shared/types";
 
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const name = carName(car);
   const base = pageMetadata({
     title: name,
-    description: `Rent the ${name} from ${formatPrice(car.pricePerDay)} per day. ${car.seats} seats, ${car.transmission}, ${car.fuelType}. Check live availability and book instantly on Rovera.`,
+    description: `${name} in the Rovera demo fleet — ${formatPrice(car.pricePerDay)}/day, ${car.seats} seats, ${car.transmission}. Portfolio project, bookings are simulated.`,
     path: `/cars/${car.id}`,
   });
 
@@ -34,51 +33,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-// Product + Offer schema, so search results can show the daily rate.
-function productJsonLd(car: Car) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: carName(car),
-    image: `${siteConfig.url}${car.imageUrl}`,
-    description: car.description ?? undefined,
-    brand: { "@type": "Brand", name: car.make },
-    sku: car.id,
-    ...(car.reviewCount > 0 && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: car.ratingAvg,
-        reviewCount: car.reviewCount,
-      },
-    }),
-    offers: {
-      "@type": "Offer",
-      url: `${siteConfig.url}/cars/${car.id}`,
-      price: car.pricePerDay,
-      priceCurrency: "AUD",
-      availability: car.available
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
-      priceSpecification: {
-        "@type": "UnitPriceSpecification",
-        price: car.pricePerDay,
-        priceCurrency: "AUD",
-        unitCode: "DAY",
-      },
-    },
-  };
-}
-
 export default async function CarDetailPage({ params }: Params) {
   const car = await getCarById(params.id).catch(() => null);
   if (!car) notFound();
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(car)) }}
-      />
       <div className="grid gap-8 md:grid-cols-2">
         <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-white">
           <Image

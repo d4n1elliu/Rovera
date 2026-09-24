@@ -1,6 +1,8 @@
 # Rovera
 
-A car rental website. **Live at [www.rovera.org](https://www.rovera.org)**
+A portfolio project: a full-stack car rental booking demo, not a real rental service.
+**Live at [www.rovera.org](https://www.rovera.org)**. Bookings are simulated and payments run in
+Stripe test mode (card `4242 4242 4242 4242`), so nothing is charged and no vehicles are provided.
 
 ## Tech Stack 
 

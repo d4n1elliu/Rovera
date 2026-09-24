@@ -5,8 +5,9 @@ import Stripe from "stripe";
 
 const globalForStripe = globalThis as unknown as { roveraStripe?: Stripe };
 
+// Test keys only: the site promises no real charge, so a live key is treated as unconfigured.
 export function isStripeConfigured() {
-  return Boolean(process.env.STRIPE_SECRET_KEY);
+  return /^(sk|rk)_test_/.test(process.env.STRIPE_SECRET_KEY ?? "");
 }
 
 export function getStripe(): Stripe {
