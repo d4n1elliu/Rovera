@@ -1,12 +1,17 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth, SIGN_IN_PATH } from "@/auth";
 import { getRentalHistory } from "@/backend/services/reservation.service";
 import { CancelBookingButton } from "@/frontend/components/features/reservations/cancel-booking-button";
 import { ReviewForm } from "@/frontend/components/features/reviews/review-form";
+import { pageMetadata } from "@/frontend/config/seo";
 import { formatDate, formatPrice } from "@/shared/utils";
 
-export const metadata: Metadata = { title: "My rentals" };
+export const metadata = pageMetadata({
+  title: "My rentals",
+  description: "Your upcoming and past Rovera rentals.",
+  path: "/rentals",
+  noindex: true,
+});
 
 // Rendered per-request: rental history is per-customer data from the DB.
 export const dynamic = "force-dynamic";

@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCarById } from "@/backend/services/car.service";
 import { ReservationForm } from "@/frontend/components/features/reservations/reservation-form";
+import { pageMetadata } from "@/frontend/config/seo";
 import { formatPrice } from "@/shared/utils";
 
-export const metadata: Metadata = { title: "Reservation" };
+export const metadata = pageMetadata({
+  title: "Reservation",
+  description: "Choose your dates and reserve this car on Rovera.",
+  path: "/reservation",
+  noindex: true,
+});
 
 export default async function ReservationPage({
   searchParams,

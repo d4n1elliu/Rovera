@@ -17,6 +17,14 @@ import {
 } from "@/frontend/config/landing";
 import { PaginationNav } from "@/frontend/components/features/cars/pagination-nav";
 import { PAGE_PARAM, queryWithout } from "@/shared/lib/query";
+import { pageMetadata } from "@/frontend/config/seo";
+import { siteConfig } from "@/frontend/config/site";
+
+export const metadata = pageMetadata({
+  title: { absolute: siteConfig.seo.title },
+  description: siteConfig.seo.description,
+  path: "/",
+});
 
 // Rendered per-request: the listing reads live availability from the DB.
 export const dynamic = "force-dynamic";

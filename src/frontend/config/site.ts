@@ -1,10 +1,24 @@
 import { LOCATIONS } from "@/shared/constants";
 
+// rovera.org redirects to www, so canonical URLs use the www host.
+const DEFAULT_SITE_URL = "https://www.rovera.org";
+
 export const siteConfig = {
   name: "Rovera",
   description: "Rent the right car for every journey.",
-  url: "https://rovera.example.com",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL,
   tagline: "Car rental without the counter.",
+  // Copy for search results and link previews, separate from the UI strings.
+  seo: {
+    title: "Rovera | Car rental, booked in minutes",
+    tagline: "Car rental, booked in minutes.",
+    description:
+      "Browse, compare and book rental cars in a single flow. Real-time availability, transparent pricing and instant confirmation.",
+    keywords: ["car rental", "car hire", "rental cars", "book a car", "Sydney car rental"],
+    author: "Daniel Liu",
+    locale: "en_AU",
+    themeColor: "#0a1730",
+  },
   nav: [
     { label: "Home", href: "/" },
     { label: "Cars", href: "/cars" },

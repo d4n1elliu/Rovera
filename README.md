@@ -42,7 +42,7 @@ degrades gracefully when absent.
 | `STRIPE_WEBHOOK_SECRET` | webhook that confirms bookings |
 | `RESEND_API_KEY` | confirmation emails |
 | `EMAIL_FROM` | sender, e.g. `Rovera <bookings@rovera.org>` |
-| `NEXT_PUBLIC_SITE_URL` | absolute links in emails and Stripe returns |
+| `NEXT_PUBLIC_SITE_URL` | absolute links in emails, Stripe returns, canonical/Open Graph URLs and the sitemap. Set to `https://www.rovera.org` in Vercel (production); falls back to that when unset |
 
 Missing optional keys degrade gracefully (unpaid bookings stay `pending`,
 emails are skipped). Stripe wants a webhook for `checkout.session.completed`

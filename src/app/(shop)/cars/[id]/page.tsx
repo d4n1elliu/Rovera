@@ -1,10 +1,39 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCarById } from "@/backend/services/car.service";
+import { pageMetadata } from "@/frontend/config/seo";
 import { formatPrice } from "@/shared/utils";
+import type { Car } from "@/shared/types";
 
-export default async function CarDetailPage({ params }: { params: { id: string } }) {
+type Params = { params: { id: string } };
+
+function carName(car: Car) {
+  return `${car.year} ${car.make} ${car.model}`;
+}
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const car = await getCarById(params.id).catch(() => null);
+  if (!car) return pageMetadata({ title: "Car not found", description: "", path: "/cars", noindex: true });
+
+  const name = carName(car);
+  const base = pageMetadata({
+    title: name,
+    description: `Rent the ${name} from ${formatPrice(car.pricePerDay)} per day. ${car.seats} seats, ${car.transmission}, ${car.fuelType}. Check live availability and book instantly on Rovera.`,
+    path: `/cars/${car.id}`,
+  });
+
+  // The car's own photo replaces the branded card on this page.
+  const image = { url: car.imageUrl, alt: name };
+  return {
+    ...base,
+    openGraph: { ...base.openGraph, images: [image] },
+    twitter: { ...base.twitter, images: [image] },
+  };
+}
+
+export default async function CarDetailPage({ params }: Params) {
   const car = await getCarById(params.id).catch(() => null);
   if (!car) notFound();
 

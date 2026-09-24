@@ -1,6 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/frontend/config/seo";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata = pageMetadata({
+  title: "Privacy Policy",
+  description:
+    "How Rovera collects, uses and protects your personal information when you browse the site, make a booking or contact support.",
+  path: "/privacy",
+});
 
 const sections = [
   {

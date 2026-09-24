@@ -1,7 +1,12 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "@/frontend/config/seo";
 
-export const metadata: Metadata = { title: "Booking confirmed" };
+export const metadata = pageMetadata({
+  title: "Booking confirmed",
+  description: "Your Rovera booking is confirmed.",
+  path: "/confirmation",
+  noindex: true,
+});
 
 /* Reached by redirect from the reservation form, carrying the booking
  * reference and whether a confirmation email actually went out.

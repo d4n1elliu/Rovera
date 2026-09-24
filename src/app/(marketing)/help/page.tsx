@@ -1,7 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/frontend/config/seo";
 import { MIN_DRIVER_AGE } from "@/shared/constants";
 
-export const metadata: Metadata = { title: "Help & FAQ" };
+export const metadata = pageMetadata({
+  title: "Help & FAQ",
+  description:
+    "Answers to common questions about renting with Rovera: driver requirements, cancellations, insurance and what to bring on pickup day.",
+  path: "/help",
+});
 
 const faqs = [
   {

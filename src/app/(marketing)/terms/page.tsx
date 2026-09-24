@@ -1,7 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/frontend/config/seo";
 import { MIN_DRIVER_AGE, YOUNG_DRIVER_AGE } from "@/shared/constants";
 
-export const metadata: Metadata = { title: "Terms of Use" };
+export const metadata = pageMetadata({
+  title: "Terms of Use",
+  description:
+    "The terms that govern bookings on Rovera, including driver eligibility, payment, cancellations, permitted vehicle use and liability.",
+  path: "/terms",
+});
 
 const sections = [
   {

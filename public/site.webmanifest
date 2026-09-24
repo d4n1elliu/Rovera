@@ -1,0 +1,13 @@
+{
+  "name": "Rovera",
+  "short_name": "Rovera",
+  "description": "Browse, compare and book rental cars in a single flow.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1730",
+  "theme_color": "#0a1730",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
