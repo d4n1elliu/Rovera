@@ -54,8 +54,8 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-center gap-4 border-t border-white/10 pt-6 text-sm sm:flex-row sm:justify-between">
           <p>
-            © {siteConfig.copyrightStartYear}–{new Date().getFullYear()} {siteConfig.name}. All
-            rights reserved.
+            © {siteConfig.copyrightStartYear}–{new Date().getFullYear()}{" "}
+            {siteConfig.portfolio.author}. All rights reserved.
           </p>
           <nav className="flex items-center gap-6" aria-label="Legal">
             {siteConfig.legalLinks.map((link) => (

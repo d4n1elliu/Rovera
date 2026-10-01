@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/frontend/components/layout/navbar";
 import { Footer } from "@/frontend/components/layout/footer";
-import { PortfolioBanner } from "@/frontend/components/PortfolioBanner";
 import { siteConfig } from "@/frontend/config/site";
 import "./globals.css";
 
@@ -70,7 +69,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
-        <PortfolioBanner />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
