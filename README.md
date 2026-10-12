@@ -6,7 +6,25 @@ Stripe test mode (card `4242 4242 4242 4242`), so nothing is charged and no vehi
 
 ## Tech Stack 
 
-Next.js · TypeScript · PostgreSQL (Supabase) · Drizzle ORM · Tailwind CSS · NextAuth · Stripe · Resend
+**Frontend**
+- Next.js
+- TypeScript
+- Tailwind CSS
+
+**Backend** 
+- Next.js API Routes
+- NextAuth
+
+**Database**
+- PostgreSQL (Supabase)
+- Drizzle ORM
+
+**Deployment**
+- Vercel
+
+**Third-Party APIs**
+- Stripe
+- Resend
 
 ## Features
 
